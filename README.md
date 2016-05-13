@@ -37,7 +37,7 @@ descriptors
 
 **Retrieve an occurance matrix for a UMLS concept**
 
-E.g For umls concept "Disease or Syndrome", the output (1/0) matrix that where
-each column corresponds to an article, each row corresponds to a disease.
+E.g For umls concept "Disease or Syndrome", `pubMedOccur.jl` ouputs matrix of ones and zeros, where
+each column corresponds to an article and each row corresponds to a disease.
 
 `julia ./exe/pubMedOccur.jl --db_path "path_to_database" occur --umls_concept "Disease or Syndrome"`
