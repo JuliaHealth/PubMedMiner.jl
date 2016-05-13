@@ -7,7 +7,8 @@
 using ArgParse
 using pubMedMiner
 using SQLite
-import NLM.umls:Credentials
+using NLM.umls:Credentials
+using JLD
 
 
 function main(args)
@@ -62,6 +63,10 @@ function main(args)
               help = "UMLS concept for occurrance analysis"
               arg_type = ASCIIString
               default = "Disease or Syndrome"
+          "--results_file"
+               help = "Path where to store the occurrancematrix"
+               arg_type = ASCIIString
+               required = true
    end
 
    parsed_args = parse_args(s) # the result is a Dict{String,Any}
@@ -92,9 +97,19 @@ function main(args)
        end
        @time begin
             isdefined(:db) || (db = SQLite.DB(db_path))
+            occur_path = parsed_args["all"]["results_file"]
+            ext = splitext(occur_path)[2]
+            if  !isequal(ext,".jdl")
+                println("Error: Could not save - results_file must have a .jdl extension")
+                exit(-1)
+            end
             umls_concept = parsed_args["all"]["umls_concept"]
             occur = pubMedMiner.occurance_matrix(db, umls_concept)
+            jldopen(occur_path, "w") do file
+                write(file, "occur", occur)
+            end
             display(occur)
+
         end
    end
 
