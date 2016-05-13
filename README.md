@@ -20,10 +20,10 @@ PubMed/Medline search using MESH descriptors and their corresponding UMLS concep
  
 `julia ./exe/pubMedSearch.jl --clean_db --db_path "path_to_database" search --email  "email@domain.com" --max_articles 100 --search_term "obesity" --start_date "2000" --end_date "2002" `
 
-*Note*
+*Notes*
 
--The results are stored in a Sqlite database
--Make sure to specify your real email address as NLM  requires it
+*The results are stored in a Sqlite database
+*Make sure to specify your real email address as NLM  requires it
 
 
 **Map MESH Descriptors to UMLS concept**
