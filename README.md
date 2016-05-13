@@ -15,7 +15,7 @@ PubMed/Medline search using MESH descriptors and their corresponding UMLS concep
 ### Examples
 
 **Search PubMed**
- - To search 100  articles related to *obesity* published between *2000-2002*, you can evoke from terminal:
+ To search 100  articles related to *obesity* published between *2000-2002*, you can evoke from terminal:
  
 `julia ./exe/pubMedSearch.jl --clean_db --db_path "path_to_database" search --email  "email@domain.com" --max_articles 100 --search_term "obesity" --start_date "2000" --end_date "2002" `
 
