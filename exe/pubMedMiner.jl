@@ -6,10 +6,11 @@
 
 module pubMedMiner
 
-importall Entrez
+importall NLM.Entrez
+importall NLM.umls
+
 using SQLite
 using DataStreams
-importall umls
 
 
 function clean_db(db_path)

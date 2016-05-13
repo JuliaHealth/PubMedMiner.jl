@@ -8,7 +8,7 @@
 using ArgParse
 using pubMedMiner
 using SQLite
-import umls:Credentials
+using NLM.umls: Credentials
 
 
 function main(args)

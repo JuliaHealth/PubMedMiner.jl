@@ -6,10 +6,12 @@
 
 module pubMedMiner
 
-importall Entrez
+# using NLM
+using NLM.Entrez
+using NLM.umls
+
 using SQLite
 using DataStreams
-importall umls
 
 
 function clean_db(db_path)
@@ -71,6 +73,7 @@ function pubmed_search_term(email, article_max, term, db_path)
         # display(efetch_dict["PubmedArticleSet"][1]["MedlineCitation"]["Article"])
 
         #save the results of an entrez fetch to a sqlite database
+        println("------Saving to database--------")
         db = save_efetch(efetch_dict, db_path)
     end
 
