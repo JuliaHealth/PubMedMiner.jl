@@ -9,7 +9,8 @@
 using ArgParse
 using pubMedMiner
 using SQLite
-import umls:Credentials
+import NLM.umls:Credentials
+using JLD
 
 
 function main(args)
@@ -35,6 +36,10 @@ function main(args)
             help = "UMLS concept for occurrance analysis"
             arg_type = ASCIIString
             default = "Disease or Syndrome"
+        "--results_file"
+             help = "Path where to store the occurrancematrix"
+             arg_type = ASCIIString
+             required = true
    end
 
 
@@ -46,11 +51,26 @@ function main(args)
 
    db_path  = parsed_args["db_path"]
    if haskey(parsed_args, "occur")
+       occur_path = parsed_args["occur"]["results_file"]
+       ext = splitext(occur_path)[2]
+       if  !isequal(ext,".jdl")
+           println("Error: results_file must have a .jdl extension")
+           exit(-1)
+       end
        @time begin
             db = SQLite.DB(db_path)
             umls_concept = parsed_args["occur"]["umls_concept"]
             occur = pubMedMiner.occurance_matrix(db, umls_concept)
             display(occur)
+            # save(occur_path, "occur", occur)
+            jldopen(occur_path, "w") do file
+                write(file, "occur", occur)
+            end
+
+            # file  = jldopen(occur_path, "r")
+            # obj2 = read(file, "occur")
+            # display(obj2)
+
         end
    end
 
