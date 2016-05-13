@@ -23,6 +23,7 @@ PubMed/Medline search using MESH descriptors and their corresponding UMLS concep
 *Notes*
 
 *The results are stored in a Sqlite database
+
 *Make sure to specify your real email address as NLM  requires it
 
 
