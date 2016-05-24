@@ -8,7 +8,7 @@ module pubMedMiner
 
 # using NLM
 using NLM.Entrez
-using NLM.umls
+using NLM.UMLS
 
 using SQLite
 using DataStreams

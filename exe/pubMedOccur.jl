@@ -9,7 +9,7 @@
 using ArgParse
 using pubMedMiner
 using SQLite
-using NLM.umls:Credentials
+using NLM.UMLS:Credentials
 using JLD
 
 
