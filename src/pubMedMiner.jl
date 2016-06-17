@@ -13,7 +13,6 @@ using NLM.UMLS
 using SQLite
 using DataStreams
 
-
 function clean_db(db_path)
     println("Cleaning DB")
 
@@ -95,7 +94,7 @@ function occurance_matrix(db, umls_concept)
 
     for (i,d) in enumerate(diseases)
         if !d.isnull
-            dis_ind_dict[d]= i
+            dis_ind_dict[get(d)]= i
         end
     end
 
@@ -112,8 +111,9 @@ function occurance_matrix(db, umls_concept)
         #form feature vector for this article
         indices = []
         for d in article_disease
-            push!(indices, dis_ind_dict[d])
+            push!(indices, dis_ind_dict[get(d)])
         end
+        println(indices)
         #TO DO: Not sure about the type. Should we choose bool to save space
         # or float to support opperations
         article_dis_feature  = zeros(Int, (length(diseases),1))
@@ -123,7 +123,7 @@ function occurance_matrix(db, umls_concept)
         disease_occurances[:, i] = article_dis_feature
     end
 
-    return disease_occurances
+    return dis_ind_dict, disease_occurances
 
 end
 

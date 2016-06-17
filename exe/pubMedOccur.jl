@@ -36,8 +36,8 @@ function main(args)
             help = "UMLS concept for occurrance analysis"
             arg_type = ASCIIString
             default = "Disease or Syndrome"
-        "--results_file"
-             help = "Path where to store the occurrancematrix"
+        "--results_dir"
+             help = "Path to store the results"
              arg_type = ASCIIString
              required = true
    end
@@ -51,20 +51,29 @@ function main(args)
 
    db_path  = parsed_args["db_path"]
    if haskey(parsed_args, "occur")
-       occur_path = parsed_args["occur"]["results_file"]
-       ext = splitext(occur_path)[2]
-       if  !isequal(ext,".jdl")
-           println("Error: results_file must have a .jdl extension")
-           exit(-1)
-       end
+       results_dir = parsed_args["occur"]["results_dir"]
+    #    ext = splitext(occur_path)[2]
+    #    if  !isequal(ext,".jdl")
+    #        println("Error: results_file must have a .jdl extension")
+    #        exit(-1)
+    #    end
+        if !isdir(results_dir)
+            mkdir(results_dir)
+        end
+        occur_path = results_dir*"/occur_sp.jdl"
+        mesh2ind_path = results_dir*"/mesh2ind.jdl"
+
        @time begin
             db = SQLite.DB(db_path)
             umls_concept = parsed_args["occur"]["umls_concept"]
-            occur = pubMedMiner.occurance_matrix(db, umls_concept)
+            mesh2ind, occur = pubMedMiner.occurance_matrix(db, umls_concept)
             display(occur)
             # save(occur_path, "occur", occur)
             jldopen(occur_path, "w") do file
                 write(file, "occur", occur)
+            end
+            jldopen(mesh2ind_path, "w") do file
+                write(file, "mesh2ind", mesh2ind)
             end
 
             # file  = jldopen(occur_path, "r")
