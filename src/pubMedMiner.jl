@@ -23,65 +23,6 @@ function clean_db(db_path)
     end
 end
 
-function pubmed_search_term(email, article_max, term, db_path)
-
-    retstart = 0
-    retmax = 10000
-    db = Nullable{SQLite.DB}()
-    article_max = article_max
-
-    if article_max < retmax
-        retmax = article_max
-    end
-
-    for rs=retstart:retmax:(article_max- 1)
-
-        rm = rs + retmax
-        if rm > article_max
-            retmax = article_max - rs
-        end
-
-        println("Fetching ", retmax, " articles, starting at index ", rs)
-
-        #1. Formulate PubMed/MEDLINE search for articles between 2000 and 201
-        #with obesity indicated as the major MeSH descriptor.
-        println("------Searching Entrez--------")
-        search_dic = Dict("db"=>"pubmed","term" => term,
-        "retstart" => rs, "retmax"=>retmax, "tool" =>"BioJulia",
-        "email" => email, "mindate"=>"2000","maxdate"=>"2012" )
-        esearch_response = esearch(search_dic)
-        #convert xml to dictionary
-        esearch_dict = eparse(esearch_response)
-
-        #2. Obtain PubMed/MEDLINE records (in MEDLINE or XML format) for
-        #formulated search using NCBI E-Utilities.
-        println("------Fetching Entrez--------")
-        fetch_dic = Dict("db"=>"pubmed","tool" =>"BioJulia", "email" => email,
-                         "retmode" => "xml", "rettype"=>"null")
-        #get the list of ids and perfom a fetch
-        if !haskey(esearch_dict, "IdList")
-            error("Error: IdList not found")
-        end
-
-        ids = []
-        for id_node in esearch_dict["IdList"][1]["Id"]
-            push!(ids, id_node)
-        end
-
-        efetch_response = efetch(fetch_dic, ids)
-        efetch_dict = eparse(efetch_response)
-        # println("______________________________________________________________")
-        # display(efetch_dict["PubmedArticleSet"][1]["MedlineCitation"]["Article"])
-
-        #save the results of an entrez fetch to a sqlite database
-        println("------Saving to database--------")
-        db = save_efetch(efetch_dict, db_path)
-    end
-
-
-    return db
-end
-
 function XMLASCII2file(xml_string::ASCIIString, file)
     xdoc = parse_string(xml_string)
     save_file(xdoc, file)
