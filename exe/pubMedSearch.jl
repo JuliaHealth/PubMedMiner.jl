@@ -40,17 +40,13 @@ function main(args)
        "--max_articles"
             help = "Maximum number of articles"
             arg_type = Int
-            default = 10
+            default = typemax(Int64)
        "--search_term"
             help = "Term to search"
             default = "obesity"
-        "--start_date"
-            help = "Start (year) of date range to use for search"
-            default = "2014"
-            arg_type = ASCIIString
-        "--end_date"
-            help = "End (year) of the date range to use for search"
-            default = "2015"
+       "--verbose"
+            help = "Verbose. Store temp files with server response"
+            action = :store_true
    end
 
 
@@ -70,9 +66,9 @@ function main(args)
            pubMedMiner.clean_db(db_path)
        end
        @time begin
-           db = pubMedMiner.pubmed_search_term(parsed_args["search"]["email"],
-           parsed_args["search"]["max_articles"], parsed_args["search"]["search_term"],
-           db_path)
+           db = pubMedMiner.pubmed_search(parsed_args["search"]["email"],
+           parsed_args["search"]["search_term"], parsed_args["search"]["max_articles"],
+           db_path, parsed_args["search"]["verbose"])
        end
    end
 
