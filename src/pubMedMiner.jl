@@ -4,28 +4,24 @@
 # BCBI - Brown University
 # Version: Julia 0.4.5
 
-module pubMedMiner
+module PubMedMiner
 
-# using NLM
-using NLM.Entrez
-using NLM.UMLS
+export pubmed_search, occurance_matrix, map_mesh_to_umls!
+
+using BioMedQuery.Entrez
+using BioMedQuery.UMLS
 
 using SQLite
-using DataStreams
+using DataStreams, DataFrames
 
 using LightXML
 
-# using XMLConvert
+using XMLconvert
 
 function clean_db(db_path)
     if isfile(db_path)
         rm(db_path)
     end
-end
-
-function XMLASCII2file(xml_string::ASCIIString, file)
-    xdoc = parse_string(xml_string)
-    save_file(xdoc, file)
 end
 
 """Search PubMed
@@ -70,7 +66,7 @@ function pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
         esearch_response = esearch(search_dic)
 
         if verbose
-            XMLASCII2file(esearch_response, "./esearch.xml")
+            xmlASCII2file(esearch_response, "./esearch.xml")
         end
 
         #convert xml to dictionary
@@ -94,7 +90,7 @@ function pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
         efetch_response = efetch(fetch_dic, ids)
 
         if verbose
-            XMLASCII2file(efetch_response, "./efetch.xml")
+            xmlASCII2file(efetch_response, "./efetch.xml")
         end
 
         efetch_dict = eparse(efetch_response)
@@ -119,39 +115,53 @@ end
 # The columns coresponds to a feature vector. Therefore there are as many
 # columns as articles. The feature vector corresponds to the
 # vector of diseases . The occurance/abscense of a disease is labeled as 1 or 0
-function occurance_matrix(db, umls_concept)
+function occurance_matrix(db, umls_semantic_type)
 
-    #retrieve a list of disease
-    diseases = Set(filter_mesh_by_concept(db, umls_concept))
+    #retrieve a list of filtered descriptors
+    filtered_mesh = Set(filter_mesh_by_concept(db, umls_semantic_type))
 
-    #create a map of diesease name to index - guarantee order
+    println("-------------------------------------------------------------")
+    println("Found ", length(filtered_mesh), " MESH decriptor related to  ", umls_semantic_type)
+    println(filtered_mesh)
+    println("-------------------------------------------------------------")
+
+    #create a map of filtered descriptor name to index to guarantee order
     dis_ind_dict = Dict()
 
-    for (i,d) in enumerate(diseases)
-        if !d.isnull
-            dis_ind_dict[get(d)]= i
+    for (i, fm) in enumerate(filtered_mesh)
+        if !fm.isnull
+            dis_ind_dict[get(fm)]= i
         end
     end
 
     articles = Entrez.DB.all_pmids(db)
 
     #create the data-matrix
-    disease_occurances = spzeros(length(diseases), length(articles))
+    disease_occurances = spzeros(length(filtered_mesh), length(articles))
 
+    #Can this process be more efficient using database join/select?
     for (i, pmid) in enumerate(articles)
+
         #get all mesh descriptors associated with give article
         article_mesh = Set(Entrez.DB.get_article_mesh(db, pmid))
-        #not all mesh are of the desired concept (e.g disease)
-        article_disease = intersect(article_mesh, diseases)
-        #form feature vector for this article
+
+        #not all mesh are of the desired semantic type
+        article_filtered_mesh = intersect(article_mesh, filtered_mesh)
+
+        #skip if empty
+        if isempty(article_filtered_mesh)
+            continue
+        end
+
+        #otherwise form feature vector for this article
         indices = []
-        for d in article_disease
+        for d in article_filtered_mesh
             push!(indices, dis_ind_dict[get(d)])
         end
-        println(indices)
+
         #TO DO: Not sure about the type. Should we choose bool to save space
         # or float to support opperations
-        article_dis_feature  = zeros(Int, (length(diseases),1))
+        article_dis_feature  = zeros(Int, (length(filtered_mesh),1))
         article_dis_feature[indices] = 1
 
         #append to data matrix
@@ -163,32 +173,39 @@ function occurance_matrix(db, umls_concept)
 end
 
 
-# Builds a map from MESH descriptors to UMLS Semantic Concepts
-# Input: db - database containing the MESH descriptors to map
-# For each of the descriptors it searches and inserts the associated semantic
-# concepts into a new table: mesh2umls, of the input datbase
-function map_mesh_to_umls(db, c::Credentials)
-  # #Create database file
-  # path = "/Users/isa/Dropbox/BrownAgain/Projects/BCBI/BioJuliaAlpha/efetch_test.db"
-  # db = SQLite.DB(path)
+"""
+    map_mesh_to_umls!(db, c::Credentials)
 
-  #if the mesh - umls relationship table doesn't esxist, create it
+Build and store in the given database a map from MESH descriptors to
+UMLS Semantic Concepts
+
+###Arguments
+
+- `db`: Database. Must contain TABLE:mesh_descriptor. For each of the
+descriptors in that table, search and insert the associated semantic
+concepts into a new (cleared) TABLE:mesh2umls
+- `c::Credentials`: UMLS username and password
+
+"""
+function map_mesh_to_umls!(db, c::Credentials; append_results=false)
+
+  #if the mesh2umls relationship table doesn't esxist, create it
   SQLite.query(db, "CREATE table IF NOT EXISTS
                     mesh2umls (mesh TEXT, umls TEXT,
-                    FOREIGN KEY(mesh) REFERENCES mesh(name),
+                    FOREIGN KEY(mesh) REFERENCES mesh_descriptor(name),
                     PRIMARY KEY(mesh, umls) )")
 
   #clear the relationship table
-  SQLite.query(db, "DELETE FROM mesh2umls")
+  if !append_results
+      SQLite.query(db, "DELETE FROM mesh2umls")
+  end
 
-  #select all entries
-  so = SQLite.Source(db,"SELECT name FROM mesh;")
-  ds = DataStreams.Data.stream!(so, DataStreams.Data.Table)
+  #select all mesh descriptors
+  so = SQLite.Source(db,"SELECT name FROM mesh_descriptor;")
+  ds = DataStreams.Data.stream!(so, DataFrame)
 
-  #get the array of terms - is there a better way?
-  mesh_terms =ds.data[1]
-
-
+  #get the array of terms
+  mesh_terms =ds.columns[1]
 
   for mt in mesh_terms
     #submit umls query
@@ -200,13 +217,13 @@ function map_mesh_to_umls(db, c::Credentials)
 
     if length(all_results) > 0
 
-      cui = best_match_cui(all_results, term)
+      cui = best_match_cui(all_results)
     #   println("Cui: ", cui)
       if cui == ""
         println("Nothing!")
         println(all_results)
       end
-      all_concepts = get_concepts(c, cui)
+      all_concepts = get_semantic_type(c, cui)
 
       for concept in all_concepts
       # insert "semantic concept" into database
@@ -228,7 +245,7 @@ function filter_mesh_by_concept(db, umls_concept)
     WHERE umls LIKE ? ", [umls_concept])
 
     #return data array
-    return query.data[1]
+    return query.columns[1]
 
 end
 

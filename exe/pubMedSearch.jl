@@ -6,16 +6,16 @@
 
 
 using ArgParse
-using pubMedMiner
+using PubMedMiner
 using SQLite
-using NLM.UMLS: Credentials
+using BioMedQuery.UMLS: Credentials
 
 
 function main(args)
 
     # initialize the settings (the description is for the help screen)
    s = ArgParseSettings()
-   s.description = "This is pubMedMiner.jl - main script"
+   s.description = "This is pubMedSearch.jl"
    s.version = "1.0"
 
    @add_arg_table s begin
@@ -52,21 +52,24 @@ function main(args)
 
 
    parsed_args = parse_args(s) # the result is a Dict{String,Any}
+   println("-------------------------------------------------------------")
+   println(s.description)
    println("Parsed args:")
    for (key,val) in parsed_args
        println("  $key  =>  $(repr(val))")
    end
+   println("-------------------------------------------------------------")
 
    db_path  = parsed_args["db_path"]
 
    if haskey(parsed_args, "search")
        #Safety only clean before searching
-       if ( parsed_args["clean_db"])
+       if ( haskey(parsed_args,"clean_db") && parsed_args["clean_db"])
            println("Cleanning Database")
-           pubMedMiner.clean_db(db_path)
+           PubMedMiner.clean_db(db_path)
        end
        @time begin
-           db = pubMedMiner.pubmed_search(parsed_args["search"]["email"],
+           db = PubMedMiner.pubmed_search(parsed_args["search"]["email"],
            parsed_args["search"]["search_term"], parsed_args["search"]["max_articles"],
            db_path, parsed_args["search"]["verbose"])
        end

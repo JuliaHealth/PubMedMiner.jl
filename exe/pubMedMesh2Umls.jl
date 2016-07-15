@@ -7,59 +7,56 @@
 
 
 using ArgParse
-using pubMedMiner
+using PubMedMiner
 using SQLite
-import NLM.UMLS:Credentials
+import BioMedQuery.UMLS:Credentials
 
 
 function main(args)
 
     # initialize the settings (the description is for the help screen)
-   s = ArgParseSettings()
-   s.description = "This is pubMedMiner.jl - main script"
-   s.version = "1.0"
+    s = ArgParseSettings()
+    s.description = "This is pubMedMiner.jl - main script"
+    s.version = "1.0"
 
-   @add_arg_table s begin
-   "--db_path"
-        help = "Path to database file to store results"
-        arg_type = ASCIIString
-        required = true
-    "umls_map"
-        help = "Build a UMLS map for the resulting search"
-        action = :command
-   end
-
-
-   @add_arg_table s["umls_map"] begin
-       "--umls_username"
+    @add_arg_table s begin
+        "--db_path"
+            help = "Path to database file to store results"
+            arg_type = ASCIIString
+            required = true
+        "--append_results"
+            help = "Flag to indicate not to clear the results TABLE:umls2mesh"
+            action = :store_true
+        "--umls_username"
             help = "UMLS-NLM username"
             arg_type = ASCIIString
             required = true
-       "--umls_password"
+        "--umls_password"
             help = "UMLS-NLM password"
             arg_type = ASCIIString
             required = true
-   end
+    end
 
-   parsed_args = parse_args(s) # the result is a Dict{String,Any}
-   println("Parsed args:")
-   for (key,val) in parsed_args
-       println("  $key  =>  $(repr(val))")
-   end
+    parsed_args = parse_args(s)
+    println("-------------------------------------------------------------")
+    println(s.description)
+    println("Parsed args:")
+    for (key,val) in parsed_args
+        println("  $key  =>  $(repr(val))")
+    end
+    println("-------------------------------------------------------------")
 
-   db_path  = parsed_args["db_path"]
+    db_path  = parsed_args["db_path"]
 
+    @time begin
+        db = SQLite.DB(db_path)
+        user = parsed_args["umls_username"]
+        psswd = parsed_args["umls_password"]
+        append = parsed_args["append_results"]
 
-   if haskey(parsed_args, "umls_map")
-       @time begin
-           isdefined(:db) || (db = SQLite.DB(db_path))
-           user = parsed_args["umls_map"]["umls_username"]
-           psswd = parsed_args["umls_map"]["umls_password"]
-           credentials = Credentials(user, psswd)
-           pubMedMiner.map_mesh_to_umls(db, credentials)
-       end
-   end
-
+        credentials = Credentials(user, psswd)
+        PubMedMiner.map_mesh_to_umls!(db, credentials; append_results=append)
+    end
 
 end
 
