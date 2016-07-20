@@ -46,7 +46,7 @@ If flag is removed, defaults to 600,000
 * verbose: Flag - If present, the NCBI xml response files are saved to current directory
 
 
-**Map MESH Descriptors to UMLS concept**
+###Map MESH Descriptors to UMLS concept
 
 The previous search saves all MESH descriptors associated with a single article.
 `pubMedMesh2Umls.jl` looks up the UMLS semantic type associated with each of the MESH
@@ -65,13 +65,13 @@ julia "$path_to_scripts"/pubMedSearch.jl   --clean_db --db_path "$db_path"  sear
 ```
 
 
-**Retrieve an occurance matrix for a UMLS concept**
+###Retrieve an occurance matrix for a UMLS concept
 
 Compute a sparse matrix indicating the presence of MESH descriptors associated
 with a given semantic type in all articles of the input database. This executable
 saves the following variables to the results directory.
 
-###Output
+**Output**
 
 * `des_ind_dict`: Dictionary matching row number to descriptor names
 * `disease_occurances` : Sparse matrix. The columns correspond to a feature
@@ -89,7 +89,7 @@ julia "$path_to_scripts"/pubMedOccur.jl --db_path "$db_path" --umls_concept "$um
 ```
 
 
-**Run all steps**
+###Run all steps
 
 Use main.sh to run one or more of the steps explained above. You will need to
 set up paths, credentials and indicate the steps to run by uncommenting the boolean
