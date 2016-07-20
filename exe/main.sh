@@ -7,7 +7,7 @@
 
 search=false
 mesh_umls_map=false
-cooccur=false
+occur=false
 
 #UNCOMMENT ONE OR MORE TO RUN
 # search=true
