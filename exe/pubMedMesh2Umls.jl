@@ -1,5 +1,5 @@
 # Executable to map MESH descriptors to UMLS concepts. Descriptors are
-# assumed to be stored in a SQLite database containing table "mesh"
+# assumed to be stored in a SQLite database containing table "mesh_descriptor"
 # Date: May 6, 2016
 # Authors: Isabel Restrepo
 # BCBI - Brown University
@@ -57,6 +57,9 @@ function main(args)
         credentials = Credentials(user, psswd)
         PubMedMiner.map_mesh_to_umls!(db, credentials; append_results=append)
     end
+    println("-------------------------------------------------------------")
+    println("Done Mapping Mesh to UMLS")
+    println("-------------------------------------------------------------")
 
 end
 

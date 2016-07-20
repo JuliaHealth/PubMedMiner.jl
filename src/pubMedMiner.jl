@@ -24,15 +24,18 @@ function clean_db(db_path)
     end
 end
 
-"""Search PubMed
-PARAMETERS
-*email: valid email address (otherwise pubmed will block you)
-*search_term : search string to submit to PubMed
+"""
+    pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
+                       db_path="./pubmed_search.sqlite", verbose=false)
+###Arguments
+
+* email: valid email address (otherwise pubmed will block you)
+* search_term : search string to submit to PubMed
     e.g asthma[MeSH Terms]) AND ("2001/01/29"[Date - Publication] : "2010"[Date - Publication]
     see http://www.ncbi.nlm.nih.gov/pubmed/advanced for help constructing the string
-*article_max : maximum number of articles to return. Defaults to 600,000
-*db_path: path to output database
-*verbose: of true, the NCBI xml response files are saved to current directory
+* article_max : maximum number of articles to return. Defaults to 600,000
+* db_path: path to output database
+* verbose: of true, the NCBI xml response files are saved to current directory
 """
 function pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
                        db_path="./pubmed_search.sqlite", verbose=false)
@@ -111,10 +114,19 @@ function pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
     return db
 end
 
-# form the data matrix for all articles.
-# The columns coresponds to a feature vector. Therefore there are as many
-# columns as articles. The feature vector corresponds to the
-# vector of diseases . The occurance/abscense of a disease is labeled as 1 or 0
+"""
+    occurance_matrix(db, umls_semantic_type)
+
+Return a sparse matrix indicating the presence of MESH descriptors associated
+with a given semantic type in all articles of the input database
+
+###Output
+
+* `des_ind_dict`: Dictionary matching row number to descriptor names
+* `disease_occurances` : Sparse matrix. The columns correspond to a feature
+vector, where each row is a MESH descriptor. There are as many
+columns as articles. The occurance/abscense of a descriptor is labeled as 1/0
+"""
 function occurance_matrix(db, umls_semantic_type)
 
     #retrieve a list of filtered descriptors
@@ -126,11 +138,11 @@ function occurance_matrix(db, umls_semantic_type)
     println("-------------------------------------------------------------")
 
     #create a map of filtered descriptor name to index to guarantee order
-    dis_ind_dict = Dict()
+    des_ind_dict = Dict()
 
     for (i, fm) in enumerate(filtered_mesh)
         if !fm.isnull
-            dis_ind_dict[get(fm)]= i
+            des_ind_dict[get(fm)]= i
         end
     end
 
@@ -140,6 +152,7 @@ function occurance_matrix(db, umls_semantic_type)
     disease_occurances = spzeros(length(filtered_mesh), length(articles))
 
     #Can this process be more efficient using database join/select?
+    narticle = 0
     for (i, pmid) in enumerate(articles)
 
         #get all mesh descriptors associated with give article
@@ -156,7 +169,7 @@ function occurance_matrix(db, umls_semantic_type)
         #otherwise form feature vector for this article
         indices = []
         for d in article_filtered_mesh
-            push!(indices, dis_ind_dict[get(d)])
+            push!(indices, des_ind_dict[get(d)])
         end
 
         #TO DO: Not sure about the type. Should we choose bool to save space
@@ -166,9 +179,13 @@ function occurance_matrix(db, umls_semantic_type)
 
         #append to data matrix
         disease_occurances[:, i] = article_dis_feature
+        narticle+=1
     end
 
-    return dis_ind_dict, disease_occurances
+    println("-------------------------------------------------------------")
+    println("Found ", narticle, " articles with valid descriptors")
+    println("-------------------------------------------------------------")
+    return des_ind_dict, disease_occurances
 
 end
 
@@ -185,7 +202,6 @@ UMLS Semantic Concepts
 descriptors in that table, search and insert the associated semantic
 concepts into a new (cleared) TABLE:mesh2umls
 - `c::Credentials`: UMLS username and password
-
 """
 function map_mesh_to_umls!(db, c::Credentials; append_results=false)
 

@@ -1,0 +1,16 @@
+language: julia
+os:
+  - linux
+  - osx
+julia:
+  - 0.4
+  - release
+notifications:
+  email: false
+script:
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia -e 'Pkg.clone(pwd()); Pkg.build("PubMedMiner"); Pkg.test("PubMedMiner"; coverage=true)'
+# after_success:
+  # - julia -e 'Pkg.add("Documenter")'
+  # - julia -e 'cd(Pkg.dir("PubMedMiner")); include(joinpath("docs", "make.jl"))'
+  # - julia -e 'cd(Pkg.dir("PubMedMiner")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
