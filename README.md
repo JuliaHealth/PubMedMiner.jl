@@ -25,7 +25,7 @@ Pkg.clone("https://github.com/bcbi/PubMedMiner.jl.git")
  Search PubMed for articles to a related term. From the terminal...
 
 ```
-db_path="./apnea.db" #path to pubMedSearch.jl
+db_path="./apnea.db"
 path_to_scripts="."
 
 entrez_email="myemail@myclient.com"
@@ -67,12 +67,20 @@ julia "$path_to_scripts"/pubMedSearch.jl   --clean_db --db_path "$db_path"  sear
 
 **Retrieve an occurance matrix for a UMLS concept**
 
-E.g For umls concept "Disease or Syndrome", `pubMedOccur.jl` ouputs matrix of ones and zeros, where
-each column corresponds to an article and each row corresponds to a disease.
+Compute a sparse matrix indicating the presence of MESH descriptors associated
+with a given semantic type in all articles of the input database. This executable
+saves the following variables to the results directory.
+
+###Output
+
+* `des_ind_dict`: Dictionary matching row number to descriptor names
+* `disease_occurances` : Sparse matrix. The columns correspond to a feature
+vector, where each row is a MESH descriptor. There are as many
+columns as articles. The occurance/abscense of a descriptor is labeled as 1/0
 
 ```
-db_path="./apnea.db" #path to pubMedOccur.jl
-path_to_scripts="."
+db_path="./apnea.db"
+path_to_scripts="." #path to pubMedOccur.jl
 
 umls_concept="Mental or Behavioral Dysfunction"
 results_dir="./test"
