@@ -9,6 +9,7 @@ using ArgParse
 using PubMedMiner
 using SQLite
 using BioMedQuery.UMLS: Credentials
+using BioMedQuery.Entrez
 
 
 function main(args)
@@ -19,36 +20,56 @@ function main(args)
    s.version = "1.0"
 
    @add_arg_table s begin
-   "--clean_db"
+    "--clean_db"
         help = "Flag indicating wether to empty database"
         action = :store_true
-   "--db_path"
-        help = "Path to database file to store results"
+    "--email"
+         help = "your email address - required by NCBI"
+         arg_type = ASCIIString
+         required = true
+    "--max_articles"
+         help = "Maximum number of articles"
+         arg_type = Int
+         default = typemax(Int64)
+    "--search_term"
+         help = "Term to search"
+         default = "obesity"
+    "--verbose"
+         help = "Verbose. Store temp files with server response"
+         action = :store_true
+    "mysql"
+        help = "Use MySQL backend"
+        action = :command
+    "sqlite"
+         help = "Use SQLite backend"
+         action = :command
+   end
+
+   @add_arg_table s["mysql"] begin
+    "--host"
+        help = "Host where you database lives"
+        arg_type = ASCIIString
+        default = "localhost"
+    "--dbname"
+        help = "Database name"
         arg_type = ASCIIString
         required = true
-   "search"
-        help = "Run a search"
-        action = :command
+    "--username"
+        help = "MySQL username"
+        arg_type = ASCIIString
+        default = "root"
+    "--password"
+        help = "MySQL password"
+        arg_type = ASCIIString
+        default = ""
    end
 
-
-   @add_arg_table s["search"] begin
-       "--email"
-            help = "your email address - required by NCBI"
-            arg_type = ASCIIString
-            required = true
-       "--max_articles"
-            help = "Maximum number of articles"
-            arg_type = Int
-            default = typemax(Int64)
-       "--search_term"
-            help = "Term to search"
-            default = "obesity"
-       "--verbose"
-            help = "Verbose. Store temp files with server response"
-            action = :store_true
-   end
-
+    @add_arg_table s["sqlite"] begin
+    "--db_path"
+         help = "Path to SQLite database file to store results"
+         arg_type = ASCIIString
+         required = true
+    end
 
 
    parsed_args = parse_args(s) # the result is a Dict{String,Any}
@@ -60,20 +81,34 @@ function main(args)
    end
    println("-------------------------------------------------------------")
 
-   db_path  = parsed_args["db_path"]
+   email = parsed_args["email"]
+   search_term = parsed_args["search_term"]
+   max_articles = parsed_args["max_articles"]
+   verbose= parsed_args["verbose"]
+   db_config = Dict()
+   save_func = nothing
 
-   if haskey(parsed_args, "search")
-       #Safety only clean before searching
-       if ( haskey(parsed_args,"clean_db") && parsed_args["clean_db"])
-           println("Cleanning Database")
-           PubMedMiner.clean_db(db_path)
-       end
-       @time begin
-           db = PubMedMiner.pubmed_search(parsed_args["search"]["email"],
-           parsed_args["search"]["search_term"], parsed_args["search"]["max_articles"],
-           db_path, parsed_args["search"]["verbose"])
-       end
+   if haskey(parsed_args, "mysql")
+       db_config = Dict(:host=>parsed_args["mysql"]["host"],
+                        :dbname=>parsed_args["mysql"]["dbname"],
+                        :username=>parsed_args["mysql"]["username"],
+                        :pswd=>parsed_args["mysql"]["password"],
+                        :overwrite=>parsed_args["clean_db"])
+       save_func = save_efetch_mysql
+   elseif haskey(parsed_args, "sqlite")
+      db_config = Dict(:db_path=>parsed_args["sqlite"]["db_path"],
+                       :overwrite=>parsed_args["clean_db"])
+      save_func = save_efetch_sqlite
+    else
+      error("Unsupported database backend")
+  end
+
+
+   @time begin
+       db = PubMedMiner.pubmed_search(email, search_term, max_articles,
+       save_func, db_config, parsed_args["verbose"])
    end
+
 
 end
 

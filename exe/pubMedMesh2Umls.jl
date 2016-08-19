@@ -20,10 +20,6 @@ function main(args)
     s.version = "1.0"
 
     @add_arg_table s begin
-        "--db_path"
-            help = "Path to database file to store results"
-            arg_type = ASCIIString
-            required = true
         "--append_results"
             help = "Flag to indicate not to clear the results TABLE:umls2mesh"
             action = :store_true
@@ -35,28 +31,76 @@ function main(args)
             help = "UMLS-NLM password"
             arg_type = ASCIIString
             required = true
+        "mysql"
+            help = "Use MySQL backend"
+            action = :command
+        "sqlite"
+             help = "Use SQLite backend"
+             action = :command
     end
+
+    @add_arg_table s["mysql"] begin
+     "--host"
+         help = "Host where you database lives"
+         arg_type = ASCIIString
+         default = "localhost"
+     "--dbname"
+         help = "Database name"
+         arg_type = ASCIIString
+         required = true
+     "--username"
+         help = "MySQL username"
+         arg_type = ASCIIString
+         default = "root"
+     "--password"
+         help = "MySQL password"
+         arg_type = ASCIIString
+         default = ""
+    end
+
+     @add_arg_table s["sqlite"] begin
+     "--db_path"
+          help = "Path to SQLite database file to store results"
+          arg_type = ASCIIString
+          required = true
+     end
+
 
     parsed_args = parse_args(s)
     println("-------------------------------------------------------------")
     println(s.description)
     println("Parsed args:")
     for (key,val) in parsed_args
-        println("  $key  =>  $(repr(val))")
+        println("  $key   =   $(repr(val))")
     end
     println("-------------------------------------------------------------")
 
-    db_path  = parsed_args["db_path"]
 
-    @time begin
+    user = parsed_args["umls_username"]
+    psswd = parsed_args["umls_password"]
+    credentials = Credentials(user, psswd)
+    append = parsed_args["append_results"]
+    db = nothing
+
+    if haskey(parsed_args, "sqlite")
+        db_path  = parsed_args["sqlite"]["db_path"]
         db = SQLite.DB(db_path)
-        user = parsed_args["umls_username"]
-        psswd = parsed_args["umls_password"]
-        append = parsed_args["append_results"]
-
-        credentials = Credentials(user, psswd)
-        PubMedMiner.map_mesh_to_umls!(db, credentials; append_results=append)
+        @time begin
+            PubMedMiner.map_mesh_to_umls_sqlite!(db, credentials; append_results=append)
+        end
+    elseif haskey(parsed_args, "mysql")
+        host = parsed_args["mysql"]["host"]
+        dbname = parsed_args["mysql"]["dbname"]
+        username = parsed_args["mysql"]["username"]
+        pswd = parsed_args["mysql"]["password"]
+        db = mysql_connect(host, username, pswd, dbname)
+        println("MySQL map_mesh_to_umls not implemented yet")
+    else
+        error("Unsupported database backend")
     end
+
+
+
     println("-------------------------------------------------------------")
     println("Done Mapping Mesh to UMLS")
     println("-------------------------------------------------------------")

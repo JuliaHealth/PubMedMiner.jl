@@ -37,8 +37,8 @@ end
 * db_path: path to output database
 * verbose: of true, the NCBI xml response files are saved to current directory
 """
-function pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
-                       db_path="./pubmed_search.sqlite", verbose=false)
+function pubmed_search(email, search_term, article_max,
+                       save_efetch_func, db_config, verbose=false)
 
     retstart = 0
     retmax = 10000
@@ -102,7 +102,7 @@ function pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
 
         #save the results of an entrez fetch to a sqlite database
         println("------Saving to database--------")
-        db = save_efetch(efetch_dict, db_path)
+        db = save_efetch_func(efetch_dict, db_config)
 
         article_total+=length(ids)
 
@@ -205,7 +205,7 @@ descriptors in that table, search and insert the associated semantic
 concepts into a new (cleared) TABLE:mesh2umls
 - `c::Credentials`: UMLS username and password
 """
-function map_mesh_to_umls!(db, c::Credentials; append_results=false)
+function map_mesh_to_umls_sqlite!(db, c::Credentials; append_results=false)
 
   #if the mesh2umls relationship table doesn't esxist, create it
   SQLite.query(db, "CREATE table IF NOT EXISTS
