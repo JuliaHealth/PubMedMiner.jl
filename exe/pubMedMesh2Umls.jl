@@ -9,6 +9,7 @@
 using ArgParse
 using PubMedMiner
 using SQLite
+using MySQL
 import BioMedQuery.UMLS:Credentials
 
 
