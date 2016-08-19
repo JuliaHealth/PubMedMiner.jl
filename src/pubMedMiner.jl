@@ -31,7 +31,7 @@ end
 
 * email: valid email address (otherwise pubmed will block you)
 * search_term : search string to submit to PubMed
-    e.g asthma[MeSH Terms]) AND ("2001/01/29"[Date - Publication] : "2010"[Date - Publication]
+    e.g (asthma[MeSH Terms]) AND ("2001/01/29"[Date - Publication] : "2010"[Date - Publication])
     see http://www.ncbi.nlm.nih.gov/pubmed/advanced for help constructing the string
 * article_max : maximum number of articles to return. Defaults to 600,000
 * db_path: path to output database
@@ -82,7 +82,9 @@ function pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
                          "retmode" => "xml", "rettype"=>"null")
         #get the list of ids and perfom a fetch
         if !haskey(esearch_dict, "IdList")
-            error("Error: IdList not found")
+            println("Error with esearch_dict:")
+            println(esearch_dict)
+            error("Response esearch_dict does not contain IdList")
         end
 
         ids = []

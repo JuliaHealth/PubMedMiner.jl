@@ -21,7 +21,8 @@ Pkg.clone("https://github.com/bcbi/PubMedMiner.jl.git")
 
 ## Executables
 
-###Search PubMed
+### Search PubMed
+
  Search PubMed for articles to a related term. From the terminal...
 
 ```
@@ -42,11 +43,11 @@ julia "$path_to_scripts"/pubMedSearch.jl   --clean_db --db_path "$db_path"  sear
     see http://www.ncbi.nlm.nih.gov/pubmed/advanced for help constructing the string
 * db_path: path to output database
 * article_max : Flag. If present it limits the maximum number of articles to return.
-If flag is removed, defaults to 600,000
+If flag is removed, defaults to maximum Int64
 * verbose: Flag - If present, the NCBI xml response files are saved to current directory
 
 
-###Map MESH Descriptors to UMLS concept
+### Build a MESH-descriptors to UMLS-concept MAP
 
 The previous search saves all MESH descriptors associated with a single article.
 `pubMedMesh2Umls.jl` looks up the UMLS semantic type associated with each of the MESH
@@ -65,7 +66,7 @@ julia "$path_to_scripts"/pubMedSearch.jl   --clean_db --db_path "$db_path"  sear
 ```
 
 
-###Retrieve an occurance matrix for a UMLS concept
+### Retrieve an occurance matrix for a UMLS concept
 
 Compute a sparse matrix indicating the presence of MESH descriptors associated
 with a given semantic type in all articles of the input database. This executable

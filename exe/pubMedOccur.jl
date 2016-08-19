@@ -56,12 +56,12 @@ function main(args)
     end
 
     occur_path = results_dir*"/occur_sp.jdl"
-    mesh2ind_path = results_dir*"/mesh2ind.jdl"
+    labels2ind_path = results_dir*"/labels2ind.jdl"
 
    @time begin
         db = SQLite.DB(db_path)
         umls_concept = parsed_args["umls_concept"]
-        mesh2ind, occur = PubMedMiner.occurance_matrix(db, umls_concept)
+        labels2ind, occur = PubMedMiner.occurance_matrix(db, umls_concept)
         println("-------------------------------------------------------------")
         println("Output Data Matrix")
         println(occur)
@@ -71,8 +71,8 @@ function main(args)
         jldopen(occur_path, "w") do file
             write(file, "occur", occur)
         end
-        jldopen(mesh2ind_path, "w") do file
-            write(file, "mesh2ind", mesh2ind)
+        jldopen(labels2ind_path, "w") do file
+            write(file, "labels2ind", labels2ind)
         end
 
 
