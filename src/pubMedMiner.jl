@@ -8,7 +8,9 @@ module PubMedMiner
 export pubmed_search, occurance_matrix, map_mesh_to_umls!
 
 using BioMedQuery.Entrez
+using BioMedQuery.Entrez.DB
 using BioMedQuery.UMLS
+using BioMedQuery.DBUtils
 
 using SQLite
 using DataStreams, DataFrames
@@ -201,36 +203,37 @@ descriptors in that table, search and insert the associated semantic
 concepts into a new (cleared) TABLE:mesh2umls
 - `c::Credentials`: UMLS username and password
 """
-@generated function map_mesh_to_umls(db, c::Credentials; append_results=false)
-    if typeof(db) == SQLite.DB
-        return :map_mesh_to_umls_sqlite(db, c::Credentials; append_results)
-    elseif typeof(db) == MySQL.MySQLHandle
-        return :map_mesh_to_umls_mysql(db, c::Credentials; append_results)
-    else
-        return :error("all_pmids: Invalid database backend")
-    end
-end
+# @generated function map_mesh_to_umls(db, c::Credentials; append_results=false)
+#     if typeof(db) == SQLite.DB
+#         return :map_mesh_to_umls_sqlite(db, c::Credentials; append_results)
+#     elseif typeof(db) == MySQL.MySQLHandle
+#         return :map_mesh_to_umls_mysql(db, c::Credentials; append_results)
+#     else
+#         return :error("all_pmids: Invalid database backend")
+#     end
+# end
 
 
-function map_mesh_to_umls_sqlite!(db, c::Credentials; append_results=false)
+function map_mesh_to_umls!(db, c::Credentials; append_results=false)
 
   #if the mesh2umls relationship table doesn't esxist, create it
-  SQLite.query(db, "CREATE table IF NOT EXISTS
-                    mesh2umls (mesh TEXT, umls TEXT,
+  db_query(db, "CREATE table IF NOT EXISTS mesh2umls (
+                    mesh VARCHAR(255),
+                    umls VARCHAR(255),
                     FOREIGN KEY(mesh) REFERENCES mesh_descriptor(name),
-                    PRIMARY KEY(mesh, umls) )")
+                    PRIMARY KEY(mesh, umls)
+                )")
 
   #clear the relationship table
   if !append_results
-      SQLite.query(db, "DELETE FROM mesh2umls")
+      db_query(db, "DELETE FROM mesh2umls")
   end
 
   #select all mesh descriptors
-  so = SQLite.Source(db,"SELECT name FROM mesh_descriptor;")
-  ds = DataStreams.Data.stream!(so, DataFrame)
+  mq = db_query(db,"SELECT name FROM mesh_descriptor;")
 
   #get the array of terms
-  mesh_terms =ds.columns[1].values
+  mesh_terms =get_value(mq.columns[1])
 
   for mt in mesh_terms
     #submit umls query
@@ -252,9 +255,7 @@ function map_mesh_to_umls_sqlite!(db, c::Credentials; append_results=false)
 
       for concept in all_concepts
       # insert "semantic concept" into database
-        SQLite.query(db, "INSERT INTO mesh2umls VALUES  (@mesh, @umls)",
-                     Dict(:mesh=> term, :umls=> concept))
-
+        insert_row!(db, "mesh2umls", Dict(:mesh=> term, :umls=> concept))
         # println(concept)
       end
 
@@ -266,11 +267,12 @@ end
 # Retrieve all mesh descriptors associated with the given umls_concept
 function filter_mesh_by_concept(db, umls_concept)
 
-    query  = SQLite.query(db, "SELECT mesh FROM mesh2umls
-    WHERE umls LIKE ? ", [umls_concept])
+    uc = string("'", replace(umls_concept, "'", "''") , "'")
+    query  = db_query(db, "SELECT mesh FROM mesh2umls
+    WHERE umls LIKE $uc ")
 
     #return data array
-    return query.columns[1].values
+    return get_value(query.columns[1])
 
 end
 

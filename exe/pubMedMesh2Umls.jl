@@ -92,14 +92,13 @@ function main(args)
         username = parsed_args["mysql"]["username"]
         pswd = parsed_args["mysql"]["password"]
         db = mysql_connect(host, username, pswd, dbname)
-        println("MySQL map_mesh_to_umls not implemented yet")
     else
         error("Unsupported database backend")
     end
 
 
     @time begin
-        PubMedMiner.map_mesh_to_umls_sqlite!(db, credentials; append_results=append)
+        PubMedMiner.map_mesh_to_umls!(db, credentials; append_results=append)
     end
     println("-------------------------------------------------------------")
     println("Done Mapping Mesh to UMLS")
