@@ -3,7 +3,6 @@
 # Authors: Isabel Restrepo
 # BCBI - Brown University
 # Version: Julia 0.4.5
-
 module PubMedMiner
 
 export pubmed_search, occurance_matrix, map_mesh_to_umls!
@@ -143,9 +142,7 @@ function occurance_matrix(db, umls_semantic_type)
     des_ind_dict = Dict()
 
     for (i, fm) in enumerate(filtered_mesh)
-        if !fm.isnull
-            des_ind_dict[get(fm)]= i
-        end
+        des_ind_dict[fm]= i
     end
 
     articles = Entrez.DB.all_pmids(db)
@@ -171,7 +168,7 @@ function occurance_matrix(db, umls_semantic_type)
         #otherwise form feature vector for this article
         indices = []
         for d in article_filtered_mesh
-            push!(indices, des_ind_dict[get(d)])
+            push!(indices, des_ind_dict[d])
         end
 
         #TO DO: Not sure about the type. Should we choose bool to save space
@@ -191,7 +188,6 @@ function occurance_matrix(db, umls_semantic_type)
 
 end
 
-
 """
     map_mesh_to_umls!(db, c::Credentials)
 
@@ -205,6 +201,17 @@ descriptors in that table, search and insert the associated semantic
 concepts into a new (cleared) TABLE:mesh2umls
 - `c::Credentials`: UMLS username and password
 """
+@generated function map_mesh_to_umls(db, c::Credentials; append_results=false)
+    if typeof(db) == SQLite.DB
+        return :map_mesh_to_umls_sqlite(db, c::Credentials; append_results)
+    elseif typeof(db) == MySQL.MySQLHandle
+        return :map_mesh_to_umls_mysql(db, c::Credentials; append_results)
+    else
+        return :error("all_pmids: Invalid database backend")
+    end
+end
+
+
 function map_mesh_to_umls_sqlite!(db, c::Credentials; append_results=false)
 
   #if the mesh2umls relationship table doesn't esxist, create it
@@ -223,11 +230,11 @@ function map_mesh_to_umls_sqlite!(db, c::Credentials; append_results=false)
   ds = DataStreams.Data.stream!(so, DataFrame)
 
   #get the array of terms
-  mesh_terms =ds.columns[1]
+  mesh_terms =ds.columns[1].values
 
   for mt in mesh_terms
     #submit umls query
-    term = SQLite.get(mt)
+    term = mt
     query = Dict("string"=>term, "searchType"=>"exact" )
     # println("term: ", term)
 
@@ -263,7 +270,7 @@ function filter_mesh_by_concept(db, umls_concept)
     WHERE umls LIKE ? ", [umls_concept])
 
     #return data array
-    return query.columns[1]
+    return query.columns[1].values
 
 end
 

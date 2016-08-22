@@ -30,6 +30,12 @@ function main(args)
          help = "Path to store the results"
          arg_type = ASCIIString
          required = true
+     "mysql"
+         help = "Use MySQL backend"
+         action = :command
+     "sqlite"
+          help = "Use SQLite backend"
+          action = :command
    end
    @add_arg_table s["mysql"] begin
     "--host"
@@ -80,13 +86,10 @@ function main(args)
 
     umls_concept = parsed_args["umls_concept"]
 
-
+    db = nothing
     if haskey(parsed_args, "sqlite")
         db_path  = parsed_args["sqlite"]["db_path"]
         db = SQLite.DB(db_path)
-        @time begin
-            labels2ind, occur = PubMedMiner.occurance_matrix(db, umls_concept)
-        end
     elseif haskey(parsed_args, "mysql")
         host = parsed_args["mysql"]["host"]
         dbname = parsed_args["mysql"]["dbname"]
@@ -98,7 +101,14 @@ function main(args)
         error("Unsupported database backend")
     end
 
+    @time begin
+        labels2ind, occur = PubMedMiner.occurance_matrix(db, umls_concept)
+    end
 
+    println("-------------------------------------------------------------")
+    println("Output Descritor to Index Dictionary")
+    println(labels2ind)
+    println("-------------------------------------------------------------")
 
     println("-------------------------------------------------------------")
     println("Output Data Matrix")

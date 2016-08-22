@@ -86,9 +86,6 @@ function main(args)
     if haskey(parsed_args, "sqlite")
         db_path  = parsed_args["sqlite"]["db_path"]
         db = SQLite.DB(db_path)
-        @time begin
-            PubMedMiner.map_mesh_to_umls_sqlite!(db, credentials; append_results=append)
-        end
     elseif haskey(parsed_args, "mysql")
         host = parsed_args["mysql"]["host"]
         dbname = parsed_args["mysql"]["dbname"]
@@ -101,7 +98,9 @@ function main(args)
     end
 
 
-
+    @time begin
+        PubMedMiner.map_mesh_to_umls_sqlite!(db, credentials; append_results=append)
+    end
     println("-------------------------------------------------------------")
     println("Done Mapping Mesh to UMLS")
     println("-------------------------------------------------------------")
