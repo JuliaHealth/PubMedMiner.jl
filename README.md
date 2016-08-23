@@ -9,7 +9,7 @@
 
 # PubMedMiner.jl
 
-[![Build Status](https://travis-ci.org/bcbi/PubMedMiner.jl.svg?branch=master)](https://travis-ci.org/bcbi/PubMedMiner.jl)
+<!-- [![Build Status](https://travis-ci.org/bcbi/PubMedMiner.jl.svg?branch=master)](https://travis-ci.org/bcbi/PubMedMiner.jl) -->
 
 This package provides a set of tools and executables to run and analyze a
 PubMed/Medline search using MESH descriptors and their corresponding UMLS concept
@@ -65,7 +65,7 @@ All scripts accept either the *sqlite* or *mysql* command followed by correspond
 
 ### Search PubMed
 
- Search PubMed for articles to a related term. 
+ Search PubMed for articles to a related term.
 
 ```
 entrez_email="my_email@my_client"
