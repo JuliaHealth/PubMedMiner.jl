@@ -234,7 +234,7 @@ function map_mesh_to_umls!(db, c::Credentials; append_results=false)
 
   #get the array of terms
   mesh_terms =get_value(mq.columns[1])
-
+  println("----------Matching MESH to UMLS-----------")
   for mt in mesh_terms
     #submit umls query
     term = mt
@@ -260,8 +260,9 @@ function map_mesh_to_umls!(db, c::Credentials; append_results=false)
       end
 
     end
+    print(".")
   end
-
+  pritnln("--------------------------------------------------")
 end
 
 # Retrieve all mesh descriptors associated with the given umls_concept
