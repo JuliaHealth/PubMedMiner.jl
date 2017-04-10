@@ -26,20 +26,20 @@ function clean_db(db_path)
 end
 
 """
-    pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
-                       db_path="./pubmed_search.sqlite", verbose=false)
+pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
+db_path="./pubmed_search.sqlite", verbose=false)
 ###Arguments
 
 * email: valid email address (otherwise pubmed will block you)
 * search_term : search string to submit to PubMed
-    e.g (asthma[MeSH Terms]) AND ("2001/01/29"[Date - Publication] : "2010"[Date - Publication])
-    see http://www.ncbi.nlm.nih.gov/pubmed/advanced for help constructing the string
+e.g (asthma[MeSH Terms]) AND ("2001/01/29"[Date - Publication] : "2010"[Date - Publication])
+see http://www.ncbi.nlm.nih.gov/pubmed/advanced for help constructing the string
 * article_max : maximum number of articles to return. Defaults to 600,000
 * db_path: path to output database
 * verbose: of true, the NCBI xml response files are saved to current directory
 """
 function pubmed_search(email, search_term, article_max,
-                       save_efetch_func, db_config, verbose=false)
+    save_efetch_func, db_config, verbose=false)
 
     retstart = 0
     retmax = 10000
@@ -80,7 +80,7 @@ function pubmed_search(email, search_term, article_max,
         #formulated search using NCBI E-Utilities.
         println("------Fetching Entrez--------")
         fetch_dic = Dict("db"=>"pubmed","tool" =>"BioJulia", "email" => email,
-                         "retmode" => "xml", "rettype"=>"null")
+        "retmode" => "xml", "rettype"=>"null")
         #get the list of ids and perfom a fetch
         if !haskey(esearch_dict, "IdList")
             println("Error with esearch_dict:")
@@ -118,7 +118,7 @@ function pubmed_search(email, search_term, article_max,
 end
 
 """
-    occurance_matrix(db, umls_semantic_type)
+occurance_matrix(db, umls_semantic_type)
 
 Return a sparse matrix indicating the presence of MESH descriptors associated
 with a given semantic type in all articles of the input database
@@ -191,7 +191,7 @@ function occurance_matrix(db, umls_semantic_type)
 end
 
 """
-    map_mesh_to_umls!(db, c::Credentials)
+map_mesh_to_umls!(db, c::Credentials)
 
 Build and store in the given database a map from MESH descriptors to
 UMLS Semantic Concepts
@@ -216,54 +216,136 @@ concepts into a new (cleared) TABLE:mesh2umls
 
 function map_mesh_to_umls!(db, c::Credentials; append_results=false)
 
-  #if the mesh2umls relationship table doesn't esxist, create it
-  db_query(db, "CREATE table IF NOT EXISTS mesh2umls (
-                    mesh VARCHAR(255),
-                    umls VARCHAR(255),
-                    FOREIGN KEY(mesh) REFERENCES mesh_descriptor(name),
-                    PRIMARY KEY(mesh, umls)
-                )")
+    #if the mesh2umls relationship table doesn't esxist, create it
+    db_query(db, "CREATE table IF NOT EXISTS mesh2umls (
+    mesh VARCHAR(255),
+    umls VARCHAR(255),
+    FOREIGN KEY(mesh) REFERENCES mesh_descriptor(name),
+    PRIMARY KEY(mesh, umls)
+    )")
 
-  #clear the relationship table
-  if !append_results
-      db_query(db, "DELETE FROM mesh2umls")
-  end
-
-  #select all mesh descriptors
-  mq = db_query(db,"SELECT name FROM mesh_descriptor;")
-
-  #get the array of terms
-  mesh_terms =get_value(mq.columns[1])
-  println("----------Matching MESH to UMLS-----------")
-  for mt in mesh_terms
-    #submit umls query
-    term = mt
-    query = Dict("string"=>term, "searchType"=>"exact" )
-    # println("term: ", term)
-
-    all_results= search_umls(c, query)
-
-    if length(all_results) > 0
-
-      cui = best_match_cui(all_results)
-    #   println("Cui: ", cui)
-      if cui == ""
-        println("Nothing!")
-        println(all_results)
-      end
-      all_concepts = get_semantic_type(c, cui)
-
-      for concept in all_concepts
-      # insert "semantic concept" into database
-        insert_row!(db, "mesh2umls", Dict(:mesh=> term, :umls=> concept))
-        # println(concept)
-      end
-
+    #clear the relationship table
+    if !append_results
+        db_query(db, "DELETE FROM mesh2umls")
     end
-    print(".")
-  end
-  pritnln("--------------------------------------------------")
+
+    #select all mesh descriptors
+    mq = db_query(db,"SELECT name FROM mesh_descriptor;")
+
+    #get the array of terms
+    mesh_terms =get_value(mq.columns[1])
+    println("----------Matching MESH to UMLS-----------")
+    tgt = get_tgt(c)
+    for mt in mesh_terms
+        #submit umls query
+        term = mt
+        query = Dict("string"=>term, "searchType"=>"exact" )
+        # println("term: ", term)
+
+        all_results= search_umls(tgt, query)
+
+        if length(all_results) > 0
+
+            cui = best_match_cui(all_results)
+            #   println("Cui: ", cui)
+            if cui == ""
+                println("Nothing!")
+                println(all_results)
+            end
+            all_concepts = get_semantic_type(tgt, cui)
+
+            for concept in all_concepts
+                # insert "semantic concept" into database
+                insert_row!(db, "mesh2umls", Dict(:mesh=> term, :umls=> concept))
+                # println(concept)
+            end
+
+        end
+        print(".")
+    end
+    println("--------------------------------------------------")
 end
+
+
+function map_mesh_to_umls_async!(db, c::Credentials; timeout = Inf, append_results=false, verbose=false)
+
+    #if the mesh2umls relationship table doesn't esxist, create it
+    db_query(db, "CREATE table IF NOT EXISTS mesh2umls (
+    mesh VARCHAR(255),
+    umls VARCHAR(255),
+    FOREIGN KEY(mesh) REFERENCES mesh_descriptor(name),
+    PRIMARY KEY(mesh, umls)
+    )")
+
+    #clear the relationship table
+    if !append_results
+        db_query(db, "DELETE FROM mesh2umls")
+    end
+
+    #select all mesh descriptors
+    mq = db_query(db,"SELECT name FROM mesh_descriptor;")
+
+    #get the array of terms
+    mesh_terms =get_value(mq.columns[1])
+    println("----------Matching MESH to UMLS-----------")
+
+    tgt = get_tgt(c)
+    errors = 200*ones(length(mesh_terms))
+    times = -ones(length(mesh_terms))
+
+    for m=1:50:length(mesh_terms)
+        end_loop=m+50
+        if end_loop > length(mesh_terms)
+            end_loop = length(mesh_terms)
+        end
+        @sync for i=m:end_loop
+            #submit umls async batch query
+            @async begin
+
+                term = mesh_terms[i]
+                query = Dict("string"=>term, "searchType"=>"exact" )
+                # println("term: ", term)
+                all_results = []
+                try
+                    t = @elapsed all_results= search_umls(tgt, query, timeout=timeout)
+                    times[i] = t
+                    print(".")
+                catch err
+                    print("!")
+                    errors[i] = err.code
+                end
+                if length(all_results) > 0
+
+                    cui = best_match_cui(all_results)
+                    if cui == ""
+                        println("Nothing!")
+                        println(all_results)
+                    end
+                    all_concepts = get_semantic_type(tgt, cui)
+
+                    for concept in all_concepts
+                        # insert "semantic concept" into database
+                        try
+                            insert_row!(db, "mesh2umls", Dict(:mesh=> term, :umls=> concept), verbose)
+                        catch
+                            #insert can fail if already in db
+                            sel = db_query(db, "SELECT EXISTS(SELECT * FROM mesh2umls WHERE mesh='$term' AND umls='$concept')")
+                            if sel[1][1] !=1
+                                error("Cannot insert nor find MESH-UMLS pair")
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    println("")
+    println("--------------------------------------------------")
+    return (times,errors)
+end
+
+
+
 
 # Retrieve all mesh descriptors associated with the given umls_concept
 function filter_mesh_by_concept(db, umls_concept)
