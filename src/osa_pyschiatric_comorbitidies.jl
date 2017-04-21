@@ -27,6 +27,44 @@ You alseo need to configure the email addess associated with you NCBI account,
 and USER and PASSWD associated with your UMLS/UTS account.
 """
 
+using BCBIVizUtils
+using Colors
+using JLD
+
+function load_occurrance_file(; results_dir = "results/",)
+    file  = jldopen(results_dir* "/occur_sp.jdl", "r")
+    occur = read(file, "occur")
+    # display(occur)
+    file  = jldopen(results_dir* "/mesh2ind.jdl", "r")
+    mesh2ind = read(file, "mesh2ind")
+
+    # display(mesh2ind)
+    #invert map
+    ind2label = Dict()
+    for key  in keys(mesh2ind)
+        val = mesh2ind[key]
+        ind2label[val] = key
+    end
+    labels = Array{ASCIIString}(length(ind2label))
+    for i in range(1,length(ind2label))
+        labels[i] = ind2label[i]
+    end
+
+    coo = occur* occur.'
+
+    graph = BCBIVizUtils.coo2graph(coo)
+    colors = distinguishable_colors(length(ind2label), RGB(1,0,0))
+
+    return graph, labels, colors
+end
+
+
+function plot3D()
+    graph, labels, colors = init()
+    BCBIVizUtils.graph2plotlyjs3D(graph, labels, colors)
+end
+
+
 function osa_pychiatric_comorbidities(; results_dir = "results/",
                                         max_articles = typemax(Int64),
                                         run_pubmed_search_and_save = true,
@@ -109,6 +147,10 @@ function osa_pychiatric_comorbidities(; results_dir = "results/",
          write(file, "labels2ind", labels2ind)
         end
     end
+
+
+    #5. Plot comorbidities graph
+
 end
 
 
