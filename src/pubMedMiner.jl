@@ -1,128 +1,52 @@
-# Utilities to mine results from a PubMed/Medline search
-# Date: May 6, 2016
-# Authors: Isabel Restrepo
-# BCBI - Brown University
-# Version: Julia 0.4.5
+"""
+    PubMedMiner
+    
+Utilities to mine results from a PubMed/Medline search
+Authors: Isabel Restrepo
+BCBI - Brown University
+"""
 module PubMedMiner
 
-export pubmed_search, occurance_matrix, map_mesh_to_umls!
+using MySQL
+# using Base.Threads
 
-using BioMedQuery.Entrez
-using BioMedQuery.Entrez.DB
-using BioMedQuery.UMLS
-using BioMedQuery.DBUtils
+export DatabaseConnection
+include("common.jl")
 
-using SQLite
-using DataStreams, DataFrames
+export umls_semantic_occurrences
 
-using LightXML
 
-using XMLconvert
+function sample_query(pmid)
+    pmid+1
 
-function clean_db(db_path)
-    if isfile(db_path)
-        rm(db_path)
-    end
+    host = "pbcbicit.services.brown.edu"
+    username = "mrestrep"
+    password = ENV["PUBMEDMINER_DB_PSSWD"]
+    dbname="pubmed_comorbidities"    
+    db = mysql_connect(host, username, password, dbname)
+    
+    
+    query_string = "INSERT INTO results_epilepsy (pmid, descriptor)
+                    SELECT pmid, descriptor
+                    FROM medline.mesh
+                    JOIN MESH_T047 ON MESH_T047.STR = descriptor
+                    WHERE pmid = 20070;"
+
+    mysql_execute(db, query_string)
+
+    mysql_disconnect(db)
 end
 
 """
-pubmed_search(email, search_term, article_max::Int64=typemax(Int64),
-db_path="./pubmed_search.sqlite", verbose=false)
-###Arguments
-
-* email: valid email address (otherwise pubmed will block you)
-* search_term : search string to submit to PubMed
-e.g (asthma[MeSH Terms]) AND ("2001/01/29"[Date - Publication] : "2010"[Date - Publication])
-see http://www.ncbi.nlm.nih.gov/pubmed/advanced for help constructing the string
-* article_max : maximum number of articles to return. Defaults to 600,000
-* db_path: path to output database
-* verbose: of true, the NCBI xml response files are saved to current directory
-"""
-function pubmed_search(email, search_term, article_max,
-    save_efetch_func, db_config, verbose=false)
-
-    retstart = 0
-    retmax = 10000
-    db = Nullable{SQLite.DB}()
-    article_max = article_max
-
-    if article_max < retmax
-        retmax = article_max
-    end
-
-    article_total = 0
-
-    for rs=retstart:retmax:(article_max- 1)
-
-        rm = rs + retmax
-        if rm > article_max
-            retmax = article_max - rs
-        end
-
-        println("Fetching ", retmax, " articles, starting at index ", rs)
-
-        #1. Formulate PubMed/MEDLINE search for articles between 2000 and 201
-        #with obesity indicated as the major MeSH descriptor.
-        println("------Searching Entrez--------")
-        search_dic = Dict("db"=>"pubmed","term" => search_term,
-        "retstart" => rs, "retmax"=>retmax, "tool" =>"BioJulia",
-        "email" => email)
-        esearch_response = esearch(search_dic)
-
-        if verbose
-            xmlASCII2file(esearch_response, "./esearch.xml")
-        end
-
-        #convert xml to dictionary
-        esearch_dict = eparse(esearch_response)
-
-        #2. Obtain PubMed/MEDLINE records (in MEDLINE or XML format) for
-        #formulated search using NCBI E-Utilities.
-        println("------Fetching Entrez--------")
-        fetch_dic = Dict("db"=>"pubmed","tool" =>"BioJulia", "email" => email,
-        "retmode" => "xml", "rettype"=>"null")
-        #get the list of ids and perfom a fetch
-        if !haskey(esearch_dict, "IdList")
-            println("Error with esearch_dict:")
-            println(esearch_dict)
-            error("Response esearch_dict does not contain IdList")
-        end
-
-        ids = []
-        for id_node in esearch_dict["IdList"][1]["Id"]
-            push!(ids, id_node)
-        end
-
-        efetch_response = efetch(fetch_dic, ids)
-
-        if verbose
-            xmlASCII2file(efetch_response, "./efetch.xml")
-        end
-
-        efetch_dict = eparse(efetch_response)
-
-        #save the results of an entrez fetch to a sqlite database
-        println("------Saving to database--------")
-        db = save_efetch_func(efetch_dict, db_config)
-
-        article_total+=length(ids)
-
-        if (length(ids) < retmax)
-            break
-        end
-
-    end
-
-    println("Finished, total number of articles: ", article_total)
-    return db
-end
-
-"""
-occurance_matrix(db, umls_semantic_type)
+umls_semantic_occurrences(db, umls_semantic_type)
 
 Return a sparse matrix indicating the presence of MESH descriptors associated
-with a given semantic type in all articles of the input database
+with a given umls semantic type in all articles that are related to the specified mesh
 
+### Inputs:
+db::MySQL.MySQLHandle: Database Connection 
+mesh::Search only pubmed articles associated with this mesh-heading
+umls_concepts...::Lists 
 ###Output
 
 * `des_ind_dict`: Dictionary matching row number to descriptor names
@@ -130,234 +54,142 @@ with a given semantic type in all articles of the input database
 vector, where each row is a MESH descriptor. There are as many
 columns as articles. The occurance/abscense of a descriptor is labeled as 1/0
 """
-function occurance_matrix(db, umls_semantic_type)
+function umls_semantic_occurrences(mesh::String, umls_concepts::String...)
+   
+    db = DatabaseConnection().con
+    
+    concept_tables = Vector{String}(length(umls_concepts))
 
-    #retrieve a list of filtered descriptors
-    filtered_mesh = Set(filter_mesh_by_concept(db, umls_semantic_type))
-
-    println("-------------------------------------------------------------")
-    println("Found ", length(filtered_mesh), " MESH decriptor related to  ", umls_semantic_type)
-    println(filtered_mesh)
-    println("-------------------------------------------------------------")
-
-    #create a map of filtered descriptor name to index to guarantee order
-    des_ind_dict = Dict()
-
-    for (i, fm) in enumerate(filtered_mesh)
-        des_ind_dict[fm]= i
+    for (ci, concept) in enumerate(umls_concepts)
+        concept_tables[ci] = UMLS2Table[concept]
     end
 
-    articles = Entrez.DB.all_pmids(db)
+    info("Concept tables to use: ", concept_tables )
 
-    #create the data-matrix
-    disease_occurances = spzeros(length(filtered_mesh), length(articles))
+    query_string = """ SELECT pmid
+                         FROM medline.mesh
+                        WHERE descriptor = '$mesh' """;
+
+    articles_df = mysql_execute(db, query_string)
+    total_articles = length(articles_df[:pmid])
+    info("$(length(articles_df[:pmid])) Articles related to MH:$mesh")
 
     #Can this process be more efficient using database join/select?
     narticle = 0
-    for (i, pmid) in enumerate(articles)
 
-        #get all mesh descriptors associated with give article
-        article_mesh = Set(Entrez.DB.get_article_mesh(db, pmid))
+    #Lookups for MeSH 
+    MeSH2idx = Dict{String, Int}()
+    idx2MeSH = Dict{Int, String}()
+    
+    mesh_global_idx = 1 
 
-        #not all mesh are of the desired semantic type
-        article_filtered_mesh = intersect(article_mesh, filtered_mesh)
+    Ik = Vector{Int}()
+    Jk = Vector{Int}()
 
-        #skip if empty
-        if isempty(article_filtered_mesh)
-            continue
-        end
+    info("----------------------------------------")
+    info("Start all articles")
 
-        #otherwise form feature vector for this article
-        indices = []
-        for d in article_filtered_mesh
-            push!(indices, des_ind_dict[d])
-        end
+    query_string = "DROP TABLE IF EXISTS results_$mesh;
 
-        #TO DO: Not sure about the type. Should we choose bool to save space
-        # or float to support opperations
-        article_dis_feature  = zeros(Int, (length(filtered_mesh),1))
-        article_dis_feature[indices] = 1
+                    CREATE TABLE results_$mesh(
+                        `pmid` INT(11),
+                        `descriptor` varchar(255),
+                        KEY `pmid` (`pmid`),
+                        KEY `descriptor` (`descriptor`),
+                        KEY `pmid_descriptor_index` (`descriptor`,`pmid`)
+                        )ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;"
 
-        #append to data matrix
-        disease_occurances[:, i] = article_dis_feature
-        narticle+=1
-    end
+    mysql_execute(db, query_string)
+    mysql_disconnect(db)
+    
+    pmap((pmid)->sample_query(pmid), [1])
+    
+    #Vectors to hold mesh/article indeces to form sparse matrix
+    # batch_size = 1000
+    # for batch=1:batch_size:total_articles
 
-    println("-------------------------------------------------------------")
-    println("Found ", narticle, " articles with valid descriptors")
-    println("-------------------------------------------------------------")
-    return des_ind_dict, disease_occurances
+    #     end_loop=batch+batch_size
+    #     if end_loop > total_articles
+    #         end_loop = total_articles
+    #     end
+    #     println("Batch: $batch")
+        
+    #     @time @sync for i=batch:end_loop
+                   
+    # for i=1:1
+    # @async begin
+        # pmid = articles_df[:pmid][i]
+        # for table in concept_tables
+            # print(".")
+            # pmid = 20070
+            # query_string = "INSERT INTO results_$mesh (pmid, descriptor)
+            #                     SELECT pmid, descriptor
+            #                     FROM medline.mesh
+            #                     JOIN $table ON $table.STR = descriptor
+            #                     WHERE pmid = $pmid;"
 
-end
+            # db2 = DatabaseConnection().con
+            
+            # query_string = "INSERT INTO results_epilepsy (pmid, descriptor)
+            #                     SELECT pmid, descriptor
+            #                     FROM medline.mesh
+            #                     JOIN MESH_T047 ON MESH_T047.STR = descriptor
+            #                     WHERE pmid = 20070;"
 
-"""
-map_mesh_to_umls!(db, c::Credentials)
+            # mysql_execute(db2, query_string)
 
-Build and store in the given database a map from MESH descriptors to
-UMLS Semantic Concepts
+            # mysql_disconnect(db2)
+                    
+            # query_string = "SELECT descriptor
+            #                 FROM medline.mesh
+            #                 JOIN $table ON $table.STR = descriptor
+            #                 WHERE pmid = $pmid;"
+        
+        
+            # #not all mesh are of the desired semantic type
+            # @time article_filtered_mesh = mysql_execute(db, query_string).columns[1]
+            
+            # #skip if empty
+            # if isempty(article_filtered_mesh)
+            #     continue
+            # end
 
-###Arguments
+            # #otherwise form feature vector for this article
+            # indices = zeros(Int, size(article_filtered_mesh,1))
+            # di  = 1
+            # for d in article_filtered_mesh
+            #     try
+            #         mesh_index_from_dict =  MeSH2idx[d]
+            #     catch
+            #         MeSH2idx[d] = mesh_global_idx
+            #         idx2MeSH[mesh_global_idx] = d
+            #         mesh_global_idx+=1
+            #     end
+            #    push!(Ik, MeSH2idx[d])
+            #    push!(Jk, article_idx)
 
-- `db`: Database. Must contain TABLE:mesh_descriptor. For each of the
-descriptors in that table, search and insert the associated semantic
-concepts into a new (cleared) TABLE:mesh2umls
-- `c::Credentials`: UMLS username and password
-"""
-# @generated function map_mesh_to_umls(db, c::Credentials; append_results=false)
-#     if typeof(db) == SQLite.DB
-#         return :map_mesh_to_umls_sqlite(db, c::Credentials; append_results)
-#     elseif typeof(db) == MySQL.MySQLHandle
-#         return :map_mesh_to_umls_mysql(db, c::Credentials; append_results)
-#     else
-#         return :error("all_pmids: Invalid database backend")
-#     end
-# end
+            # end
 
+        # end
 
-function map_mesh_to_umls!(db, c::Credentials; append_results=false)
+        # narticle+=1
+    # end
 
-    #if the mesh2umls relationship table doesn't esxist, create it
-    db_query(db, "CREATE table IF NOT EXISTS mesh2umls (
-    mesh VARCHAR(255),
-    umls VARCHAR(255),
-    FOREIGN KEY(mesh) REFERENCES mesh_descriptor(name),
-    PRIMARY KEY(mesh, umls)
-    )")
+    # println(".")
 
-    #clear the relationship table
-    if !append_results
-        db_query(db, "DELETE FROM mesh2umls")
-    end
+    # println("-------------------------------------------------------------")
+    # println("Found ", narticle, " articles with valid descriptors")
+    # println("-------------------------------------------------------------")
 
-    #select all mesh descriptors
-    mq = db_query(db,"SELECT name FROM mesh_descriptor;")
+    #create the data-matrix
+    # Vk = ones(Float64, length(I_k))
+    # m = length(keys(MeSH2idx))
+    # n = length(articles_df[:pmid])
+    # occur_mat = sparse(Ik, Jk, Vk, m, n, *)
 
-    #get the array of terms
-    mesh_terms =get_value(mq.columns[1])
-    println("----------Matching MESH to UMLS-----------")
-    tgt = get_tgt(c)
-    for mt in mesh_terms
-        #submit umls query
-        term = mt
-        query = Dict("string"=>term, "searchType"=>"exact" )
-        # println("term: ", term)
-
-        all_results= search_umls(tgt, query)
-
-        if length(all_results) > 0
-
-            cui = best_match_cui(all_results)
-            #   println("Cui: ", cui)
-            if cui == ""
-                println("Nothing!")
-                println(all_results)
-            end
-            all_concepts = get_semantic_type(tgt, cui)
-
-            for concept in all_concepts
-                # insert "semantic concept" into database
-                insert_row!(db, "mesh2umls", Dict(:mesh=> term, :umls=> concept))
-                # println(concept)
-            end
-
-        end
-        print(".")
-    end
-    println("--------------------------------------------------")
-end
-
-
-function map_mesh_to_umls_async!(db, c::Credentials; timeout = Inf, append_results=false, verbose=false)
-
-    #if the mesh2umls relationship table doesn't esxist, create it
-    db_query(db, "CREATE table IF NOT EXISTS mesh2umls (
-    mesh VARCHAR(255),
-    umls VARCHAR(255),
-    FOREIGN KEY(mesh) REFERENCES mesh_descriptor(name),
-    PRIMARY KEY(mesh, umls)
-    )")
-
-    #clear the relationship table
-    if !append_results
-        db_query(db, "DELETE FROM mesh2umls")
-    end
-
-    #select all mesh descriptors
-    mq = db_query(db,"SELECT name FROM mesh_descriptor;")
-
-    #get the array of terms
-    mesh_terms =get_value(mq.columns[1])
-    println("----------Matching MESH to UMLS-----------")
-
-    tgt = get_tgt(c)
-    errors = 200*ones(length(mesh_terms))
-    times = -ones(length(mesh_terms))
-
-    for m=1:50:length(mesh_terms)
-        end_loop=m+50
-        if end_loop > length(mesh_terms)
-            end_loop = length(mesh_terms)
-        end
-        @sync for i=m:end_loop
-            #submit umls async batch query
-            @async begin
-
-                term = mesh_terms[i]
-                query = Dict("string"=>term, "searchType"=>"exact" )
-                # println("term: ", term)
-                all_results = []
-                try
-                    t = @elapsed all_results= search_umls(tgt, query, timeout=timeout)
-                    times[i] = t
-                    print(".")
-                catch err
-                    print("!")
-                    errors[i] = err.code
-                end
-                if length(all_results) > 0
-
-                    cui = best_match_cui(all_results)
-                    if cui == ""
-                        println("Nothing!")
-                        println(all_results)
-                    end
-                    all_concepts = get_semantic_type(tgt, cui)
-
-                    for concept in all_concepts
-                        # insert "semantic concept" into database
-                        try
-                            insert_row!(db, "mesh2umls", Dict(:mesh=> term, :umls=> concept), verbose)
-                        catch
-                            #insert can fail if already in db
-                            sel = db_query(db, "SELECT EXISTS(SELECT * FROM mesh2umls WHERE mesh='$term' AND umls='$concept')")
-                            if sel[1][1] !=1
-                                error("Cannot insert nor find MESH-UMLS pair")
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    println("")
-    println("--------------------------------------------------")
-    return (times,errors)
-end
-
-
-
-
-# Retrieve all mesh descriptors associated with the given umls_concept
-function filter_mesh_by_concept(db, umls_concept)
-
-    uc = string("'", replace(umls_concept, "'", "''") , "'")
-    query  = db_query(db, "SELECT mesh FROM mesh2umls
-    WHERE umls LIKE $uc ")
-
-    #return data array
-    return get_value(query.columns[1])
+    # return OccurrenceData(occur_mat, MeshLookup(idx2MeSH, MeSH2idx))
 
 end
 
 
-end
+end #Module
