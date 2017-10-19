@@ -1,5 +1,3 @@
-const UMLS2Table = Dict("Disease or Syndrome" => "MESH_T047")
-
 """
 DatabaseSettings
 
