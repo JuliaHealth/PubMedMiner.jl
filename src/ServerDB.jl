@@ -1,4 +1,6 @@
-const UMLS2Table = Dict("Disease or Syndrome" => "MESH_T047")
+const UMLS2MESHTable = Dict("Disease or Syndrome" => "MESH_T047",
+                        "Mental or Behavioral Dysfunction" =>"MESH_T048",
+                        "Neoplastic Process" => "MESH_T191")
 
 function umls_occurrance_query(pmid, umls_table, results_table; dbname="pubmed_comorbidities" )
     
@@ -6,17 +8,23 @@ function umls_occurrance_query(pmid, umls_table, results_table; dbname="pubmed_c
     username = ENV["PUBMEDMINER_DB_USER"]
     password = ENV["PUBMEDMINER_DB_PSSWD"]
     
-    db = mysql_connect(host, username, password, dbname)
-       
-    query_string = "INSERT INTO $results_table (pmid, descriptor)
-                    SELECT pmid, descriptor
-                    FROM medline.mesh
-                    JOIN $umls_table ON $(umls_table).STR = descriptor
-                    WHERE pmid = $pmid;"
+    try
+        
+        
+        db = mysql_connect(host, username, password, dbname)
+        
+        query_string = "INSERT INTO $results_table (pmid, descriptor)
+                        SELECT pmid, descriptor
+                        FROM medline.mesh
+                        JOIN $umls_table ON $(umls_table).STR = descriptor
+                        WHERE pmid = $pmid;"
 
-    mysql_execute(db, query_string)
+        mysql_execute(db, query_string)
 
-    mysql_disconnect(db)
+        mysql_disconnect(db)
+    catch
+        error("Failed to process PMDI $pmid - could be a connection error")
+    end
 end
     
 """
@@ -36,16 +44,9 @@ umls_concepts...::Lists
 vector, where each row is a MESH descriptor. There are as many
 columns as articles. The occurance/abscense of a descriptor is labeled as 1/0
 """
-function save_semantic_occurrences(mesh::String, umls_concepts::String...; overwrite=true)
+function save_semantic_occurrences(mesh::String, umls_concepts::String...; overwrite=false)
     
     db = DatabaseConnection().con
-    
-    concept_tables = Vector{String}(length(umls_concepts))
-
-    for (ci, concept) in enumerate(umls_concepts)
-        concept_tables[ci] = UMLS2Table[concept]
-    end
-
 
     query_string = """ SELECT pmid
                             FROM medline.mesh
@@ -54,39 +55,55 @@ function save_semantic_occurrences(mesh::String, umls_concepts::String...; overw
     articles_df = mysql_execute(db, query_string)
     total_articles = length(articles_df[:pmid])
     info("$(length(articles_df[:pmid])) Articles related to MH:$mesh")
-
     
     info("----------------------------------------")
     info("Start all articles")
 
-
     
     for concept in umls_concepts
 
-        umls_table = UMLS2Table[concept]
-        info("Using concept table: ", umls_table )            
-        results_table = lowercase(string(mesh, "_" ,umls_table))       
-
-        if overwrite
-            query_string = "DROP TABLE IF EXISTS $(results_table);
-    
-                            CREATE TABLE $(results_table)(
-                                `pmid` INT(11),
-                                `descriptor` varchar(255),
-                                KEY `pmid` (`pmid`),
-                                KEY `descriptor` (`descriptor`),
-                                KEY `pmid_descriptor_index` (`descriptor`,`pmid`)
-                                )ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;"
-    
-            mysql_execute(db, query_string)
+        umls_table = ""
+        if !haskey(UMLS2MESHTable, concept)
+            warn("Concept ($concept) not available for filtering. Contact Admin. Skipping")
+            continue
         end
- 
-        # umls_occurrance_query(articles_df[:pmid][1], umls_table, results_table) 
-        pmap((pmid)->umls_occurrance_query(pmid, umls_table, results_table), articles_df[:pmid])
+
+        umls_table = UMLS2MESHTable[concept]
+        info("Using concept table: ", umls_table )            
+        results_table = lowercase(string(mesh, "_" ,umls_table))
+        results_table = replace(results_table, " ", "_")      
+        info("Using results table: ", results_table )            
+
+        #does table exist?
+        query_string = "SHOW TABLES LIKE '$(results_table)' "
+        sel = mysql_execute(db, query_string)
+        table_exists = size(sel,1) == 1 ? true:false
+
+        if table_exists           
+            if overwrite
+                info("Overwriting table")
+                query_string = "TRUNCATE TABLE $(results_table);"
+                mysql_execute(db, query_string)
+                pmap((pmid)->umls_occurrance_query(pmid, umls_table, results_table), articles_df[:pmid])      
+            else
+                info("Table exists and will remain unchanged")
+            end
+        else
+            info("Table doesn't exist, create")            
+            query_string = "CREATE TABLE $(results_table)(
+                                    `pmid` INT(11),
+                                    `descriptor` varchar(255),
+                                    KEY `pmid` (`pmid`),
+                                    KEY `descriptor` (`descriptor`),
+                                    KEY `pmid_descriptor_index` (`descriptor`,`pmid`)
+                                    )ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;"
+        
+            mysql_execute(db, query_string)
+            pmap((pmid)->umls_occurrance_query(pmid, umls_table, results_table), articles_df[:pmid])
+        end
     end
 
-    mysql_disconnect(db)
-
+    mysql_disconnect(db)              
 end
 
 function get_semantic_occurrences_df(mesh::String, umls_concepts::String...)
@@ -96,9 +113,11 @@ function get_semantic_occurrences_df(mesh::String, umls_concepts::String...)
     results_df = DataFrame()
     
     for concept in umls_concepts
-        umls_table = UMLS2Table[concept]
+        umls_table = UMLS2MESHTable[concept]
         info("Using concept table: ", umls_table )            
-        results_table = lowercase(string(mesh, "_" ,umls_table)) 
+        results_table = lowercase(string(mesh, "_" ,umls_table))
+        results_table = replace(results_table, " ", "_")      
+        info("Using results table: ", results_table )   
         
         query_string = "SELECT *
                         FROM $results_table;"
