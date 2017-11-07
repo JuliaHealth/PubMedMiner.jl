@@ -20,7 +20,7 @@ Pkg.clone("https://github.com/bcbi/PubMedMiner.jl.git")
 
 ## Dependencies
 
-PubMedMiner depend on MySQL.jl and DataFrames.jl which should be installed automatially by the package manager when clonning this reposity (via Julia). However, many of the examples provided have additional dependencies that will be described accordingly.
+PubMedMiner depends on MySQL.jl and DataFrames.jl which should be installed automatially by the package manager when clonning this reposity (via Julia). However, many of the examples provided have additional dependencies that will be described accordingly.
 
 
 ## Tools and Examples:
