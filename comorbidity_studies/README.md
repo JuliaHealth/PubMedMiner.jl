@@ -9,24 +9,10 @@ If you are a Brown reaseracher, teh studies can be run faster by accessing Brown
 
 In this case there are three available examples comorbitidy studies presented via Jupyter notebooks:
 
-| Epilepsy   |      Suicide      |  Colonic Neoplasmas |
+| [Epilepsy](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/epilepsy_comorbidities_server_db.ipynb)   |      [Suicide](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/suicide_comorbidities_server_db.ipynb)      |  [Colonic Neoplasmas](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/colonic_neoplasms_comorbidities_server_db.ipynb) |
 |:----------:|:-------------:|:------:|
-| <img src="./figures/cocurrence_graph_epilepsy.png" alt="Drawing" style="width: 200px;"/>|  <img src="./figures/cocurrence_graph_suicide.png" alt="Drawing" style="width: 200px;"/> | <img src="./figures/cocurrence_graph_colonic_neoplasmas.png" alt="Drawing" style="width: 200px;"/> |
-
-
-| Epilepsy   |
-|:----------:|
-| <img src="./figures/cocurrence_graph_epilepsy.png" alt="Drawing" style="width: 200px;"/>| 
-
-|      Suicide  | 
-|:-------------:|
-|  <img src="./figures/cocurrence_graph_suicide.png" alt="Drawing" style="width: 200px;"/> | 
-
-
-|  Colonic Neoplasmas |
-|:----------:|
-| <img src="./figures/cocurrence_graph_colonic_neoplasmas.png" alt="Drawing" style="width: 200px;"/> |
-    
+| [<img src="./figures/cocurrence_graph_epilepsy.png" alt="Drawing" style="width: 200px;"/>](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/epilepsy_comorbidities_server_db.ipynb)|  [<img src="./figures/cocurrence_graph_suicide.png" alt="Drawing" style="width: 200px;"/>](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/suicide_comorbidities_server_db.ipynb) | [<img src="./figures/cocurrence_graph_colonic_neoplasmas.png" alt="Drawing" style="width: 200px;"/>](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/colonic_neoplasms_comorbidities_server_db.ipynb) |
+   
 
 ## Local Resources
 
