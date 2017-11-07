@@ -28,7 +28,7 @@ For more information or help setting up your user, contact us.
 * NamedArrays.jl - `Pkg.add("PlotlyJS")`
 * StatsBase.jl - - `Pkg.add("StatsBase")`
 * Revise.jl (optional) - `Pkg.add("Revise")`
-* 
+
 
 Three examples of comorbitidy studies are presented via Jupyter notebooks and included in the subdirectory [brown_databases](https://github.com/bcbi/PubMedMiner.jl/tree/master/comorbidity_studies/brown_databases). For reproducing the results, download the notebooks. To view the studies, use the following links which are rendered via nbviewer (github does does not render the plots)
 
