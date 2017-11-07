@@ -25,5 +25,5 @@ PubMedMiner utilities only depend on MySQL and DataFrames which should be instal
 
 ## Tools and Examples:
 
-* [Sample Comorbidity Examples]()
-* Convinience Executable Files
+* [Sample Comorbidity Studies](https://github.com/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/README.md)
+* [Convinience Executable Files](https://github.com/bcbi/PubMedMiner.jl/tree/master/exe/README.md)
