@@ -12,7 +12,25 @@ If you are a Brown reaseracher, the studies can be run faster by accessing Brown
 
 For more information or help setting up your user, contact us.
 
-Three examples of comorbitidy studies are presented via Jupyter notebooks and included in the subdirectory comorbidity_studies. For reproducing the results, please clone this repository. To view the studies, use the following links (nbviewer - github does does noot render the plots)
+### Julia Package Dependencies:
+
+#### Unregistered:
+* PubMedMiner.jl - `Pkg.clone("https://github.com/bcbi/PubMedMiner.jl.git")`
+* ARules.jl - `Pkg.clone("https://github.com/bcbi/ARules.jl.git")`
+* BCBIStats.jl - `Pkg.clone("https://github.com/bcbi/BCBIStats.jl.git")`
+* PlotlyJSFactory - `Pkg.clone("https://github.com/mirestrepo/PlotlyJSFactory.jl.git")`
+
+#### Registered:
+* DataTables.jl - `Pkg.add("DataTables")`
+* FreqTables.jl - `Pkg.add("FreqTables")`
+* PlotlyJS.jl - `Pkg.add("PlotlyJS")` 
+    * If Sankey Diagram is not available, checkout master: `Pkg.checkout("PlotlyJS")`
+* NamedArrays.jl - `Pkg.add("PlotlyJS")`
+* StatsBase.jl - - `Pkg.add("StatsBase")`
+* Revise.jl (optional) - `Pkg.add("Revise")`
+* 
+
+Three examples of comorbitidy studies are presented via Jupyter notebooks and included in the subdirectory [brown_databases](https://github.com/bcbi/PubMedMiner.jl/tree/master/comorbidity_studies/brown_databases). For reproducing the results, download the notebooks. To view the studies, use the following links which are rendered via nbviewer(github does does not render the plots)
 
 | [Epilepsy](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/epilepsy_comorbidities_server_db.ipynb)   |      [Suicide](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/suicide_comorbidities_server_db.ipynb)      |  [Colonic Neoplasmas](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/colonic_neoplasms_comorbidities_server_db.ipynb) |
 |:----------:|:-------------:|:------:|
