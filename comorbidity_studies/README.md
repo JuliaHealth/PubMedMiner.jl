@@ -1,6 +1,6 @@
-# Sample (PubMed) Comorbidity Studies
+# PubMed Comorbidity Studies
 
-This repository contains Jupyter notebooks that use tools and pipelines developed in Julia at The Brown's Center for BioMedical Informatics to explore comorbidities in PubMed Articles
+This repository contains [Julia](https://julialang.org) scripts and Jupyter notebooks that use tools and pipelines developed at The Brown's Center for Biomedical Informatics to explore comorbidities in PubMed articles
 
 
 ## Brown Databases
