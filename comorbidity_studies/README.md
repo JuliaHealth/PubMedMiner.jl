@@ -30,8 +30,9 @@ For more information or help setting up your user, contact us.
 * Revise.jl (optional) - `Pkg.add("Revise")`
 * 
 
-Three examples of comorbitidy studies are presented via Jupyter notebooks and included in the subdirectory [brown_databases](https://github.com/bcbi/PubMedMiner.jl/tree/master/comorbidity_studies/brown_databases). For reproducing the results, download the notebooks. To view the studies, use the following links which are rendered via nbviewer(github does does not render the plots)
+Three examples of comorbitidy studies are presented via Jupyter notebooks and included in the subdirectory [brown_databases](https://github.com/bcbi/PubMedMiner.jl/tree/master/comorbidity_studies/brown_databases). For reproducing the results, download the notebooks. To view the studies, use the following links which are rendered via nbviewer (github does does not render the plots)
 
+### Examples of Exploratory Studies
 | [Epilepsy](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/epilepsy_comorbidities_server_db.ipynb)   |      [Suicide](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/suicide_comorbidities_server_db.ipynb)      |  [Colonic Neoplasmas](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/colonic_neoplasms_comorbidities_server_db.ipynb) |
 |:----------:|:-------------:|:------:|
 | [<img src="./figures/cocurrence_graph_epilepsy.png" alt="Drawing" style="width: 200px;"/>](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/epilepsy_comorbidities_server_db.ipynb)|  [<img src="./figures/cocurrence_graph_suicide.png" alt="Drawing" style="width: 200px;"/>](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/suicide_comorbidities_server_db.ipynb) | [<img src="./figures/cocurrence_graph_colonic_neoplasmas.png" alt="Drawing" style="width: 200px;"/>](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/colonic_neoplasms_comorbidities_server_db.ipynb) |
@@ -39,4 +40,4 @@ Three examples of comorbitidy studies are presented via Jupyter notebooks and in
 
 ## Local Resources
 
-The studies can also be run on your local workstationg by querying the ENTERZ and UMLS APIs and using related Julia packages such us BioMedQuery. Basic Julia scripts are provided under local_databases directory. Related Jupyter Notebooks are coming soon
+The studies can also be run on your local workstationg by querying the ENTERZ and UMLS APIs and using related Julia packages such us BioMedQuery. Basic Julia scripts are provided under [local_databases](https://github.com/bcbi/PubMedMiner.jl/tree/master/comorbidity_studies/local_databases) directory. Related Jupyter Notebooks are coming soon
