@@ -5,7 +5,7 @@ This repository contains [Julia](https://julialang.org) scripts and Jupyter note
 
 ## Brown Databases
 
-If you are a Brown reaseracher, the studies can be run faster by accessing Brown's databases. You will need to have select access to the following schemas on BCBI's database server:
+If you are a Brown researcher, the studies can be run faster by accessing Brown's databases. You will need to have select access to the following schemas on BCBI's database server:
 * medline
 * umls_meta
 * pubmed_miner
