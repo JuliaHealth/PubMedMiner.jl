@@ -13,6 +13,19 @@ In this case there are three available examples comorbitidy studies presented vi
 |:----------:|:-------------:|:------:|
 | <img src="./figures/cocurrence_graph_epilepsy.png" alt="Drawing" style="width: 200px;"/>|  <img src="./figures/cocurrence_graph_suicide.png" alt="Drawing" style="width: 200px;"/> | <img src="./figures/cocurrence_graph_colonic_neoplasmas.png" alt="Drawing" style="width: 200px;"/> |
 
+
+| Epilepsy   |
+|:----------:|
+| <img src="./figures/cocurrence_graph_epilepsy.png" alt="Drawing" style="width: 400px;"/>| 
+
+|      Suicide  | 
+|:-------------:|
+|  <img src="./figures/cocurrence_graph_suicide.png" alt="Drawing" style="width: 400px;"/> | 
+
+
+|  Colonic Neoplasmas |
+|:----------:|
+| <img src="./figures/cocurrence_graph_colonic_neoplasmas.png" alt="Drawing" style="width: 400px;"/> |
     
 
 ## Local Resources
