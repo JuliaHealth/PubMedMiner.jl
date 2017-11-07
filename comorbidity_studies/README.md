@@ -1,13 +1,18 @@
 # Sample (PubMed) Comorbidity Studies
 
-This repository contains Jupyter notebooks that uses tools and pipelines developed in Julia at Brown's Center for BioMedical Informatics to explore comorbidities in PubMed Articles
+This repository contains Jupyter notebooks that use tools and pipelines developed in Julia at The Brown's Center for BioMedical Informatics to explore comorbidities in PubMed Articles
 
 
 ## Brown Databases
 
-If you are a Brown reaseracher, teh studies can be run faster by accessing Brown's databases. You will need to have select access to the following schemas on BCBI's database server. (For more information or help setting up your user, contact us)
+If you are a Brown reaseracher, the studies can be run faster by accessing Brown's databases. You will need to have select access to the following schemas on BCBI's database server:
+* medline
+* umls_meta
+* pubmed_miner
 
-In this case there are three available examples comorbitidy studies presented via Jupyter notebooks:
+For more information or help setting up your user, contact us.
+
+Three examples of comorbitidy studies are presented via Jupyter notebooks and included in the subdirectory comorbidity_studies. For reproducing the results, please clone this repository. To view the studies, use the following links (nbviewer - github does does noot render the plots)
 
 | [Epilepsy](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/epilepsy_comorbidities_server_db.ipynb)   |      [Suicide](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/suicide_comorbidities_server_db.ipynb)      |  [Colonic Neoplasmas](http://nbviewer.jupyter.org/github/bcbi/PubMedMiner.jl/blob/master/comorbidity_studies/brown_databases/colonic_neoplasms_comorbidities_server_db.ipynb) |
 |:----------:|:-------------:|:------:|
