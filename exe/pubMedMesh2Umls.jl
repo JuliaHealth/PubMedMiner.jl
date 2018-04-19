@@ -91,7 +91,7 @@ function main(args)
         dbname = parsed_args["mysql"]["dbname"]
         username = parsed_args["mysql"]["username"]
         pswd = parsed_args["mysql"]["password"]
-        db = mysql_connect(host, username, pswd, dbname)
+        db = MySQL.connect(host, username, pswd, dbname)
     else
         error("Unsupported database backend")
     end

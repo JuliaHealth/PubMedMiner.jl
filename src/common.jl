@@ -59,19 +59,19 @@ struct DatabaseConnection
 
     function DatabaseConnection(dbname::String)
         ds = DatabaseSettings(dbname)
-        con = mysql_connect(ds.host, ds.username, ds.password, ds.dbname)
+        con = MySQL.connect(ds.host, ds.username, ds.password, db = ds.dbname)
         this = new(con)
     end
 
 
     function DatabaseConnection()
         ds = DatabaseSettings()
-        con = mysql_connect(ds.host, ds.username, ds.password, ds.dbname)
+        con = MySQL.connect(ds.host, ds.username, ds.password, db = ds.dbname)
         this = new(con)
     end
 
     function DatabaseConnection(host::String, username::String, password::String, dbname::String)
-        con = mysql_connect(host, username, password, dbname)
+        con = MySQL.connect(host, username, password, dbname)
         this = new(con)
     end
 end

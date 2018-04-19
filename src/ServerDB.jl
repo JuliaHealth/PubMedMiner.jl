@@ -11,7 +11,7 @@ function umls_occurrance_query(pmid, umls_table, results_table; dbname="pubmed_c
     try
         
         
-        db = mysql_connect(host, username, password, dbname)
+        db = MySQL.connect(host, username, password, dbname)
         
         query_string = "INSERT INTO $results_table (pmid, descriptor)
                         SELECT pmid, descriptor
@@ -19,9 +19,9 @@ function umls_occurrance_query(pmid, umls_table, results_table; dbname="pubmed_c
                         JOIN $umls_table ON $(umls_table).STR = descriptor
                         WHERE pmid = $pmid;"
 
-        mysql_execute(db, query_string)
+        MySQL.execute!(db, query_string)
 
-        mysql_disconnect(db)
+        MySQL.disconnect(db)
     catch
         error("Failed to process PMDI $pmid - could be a connection error")
     end
@@ -52,7 +52,7 @@ function save_semantic_occurrences(mesh::String, umls_concepts::String...; overw
                             FROM medline.mesh
                         WHERE descriptor = '$mesh' """;
 
-    articles_df = mysql_execute(db, query_string)
+    articles_df = MySQL.execute!(db, query_string)
     total_articles = length(articles_df[:pmid])
     info("$(length(articles_df[:pmid])) Articles related to MH:$mesh")
     
@@ -76,14 +76,14 @@ function save_semantic_occurrences(mesh::String, umls_concepts::String...; overw
 
         #does table exist?
         query_string = "SHOW TABLES LIKE '$(results_table)' "
-        sel = mysql_execute(db, query_string)
+        sel = MySQL.execute!(db, query_string)
         table_exists = size(sel,1) == 1 ? true:false
 
         if table_exists           
             if overwrite
                 info("Overwriting table")
                 query_string = "TRUNCATE TABLE $(results_table);"
-                mysql_execute(db, query_string)
+                MySQL.execute!(db, query_string)
                 pmap((pmid)->umls_occurrance_query(pmid, umls_table, results_table), articles_df[:pmid])      
             else
                 info("Table exists and will remain unchanged")
@@ -98,12 +98,12 @@ function save_semantic_occurrences(mesh::String, umls_concepts::String...; overw
                                     KEY `pmid_descriptor_index` (`descriptor`,`pmid`)
                                     )ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;"
         
-            mysql_execute(db, query_string)
+            MySQL.execute!(db, query_string)
             pmap((pmid)->umls_occurrance_query(pmid, umls_table, results_table), articles_df[:pmid])
         end
     end
 
-    mysql_disconnect(db)              
+    MySQL.disconnect(db)              
 end
 
 function get_semantic_occurrences_df(mesh::String, umls_concepts::String...)
@@ -122,10 +122,10 @@ function get_semantic_occurrences_df(mesh::String, umls_concepts::String...)
         query_string = "SELECT *
                         FROM $results_table;"
         
-        results_df = [results_df; mysql_execute(db, query_string)]
+        results_df = [results_df; MySQL.execute!(db, query_string)]
     end
 
-    mysql_disconnect(db)
+    MySQL.disconnect(db)
     results_df
 
 end
