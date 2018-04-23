@@ -8,23 +8,17 @@ function umls_occurrance_query(pmid, umls_table, results_table; dbname="pubmed_c
     username = ENV["PUBMEDMINER_DB_USER"]
     password = ENV["PUBMEDMINER_DB_PSSWD"]
     
-    try
-        
-        
-        db = MySQL.connect(host, username, password, dbname)
-        
-        query_string = "INSERT INTO $results_table (pmid, descriptor)
-                        SELECT pmid, descriptor
-                        FROM medline.mesh
-                        JOIN $umls_table ON $(umls_table).STR = descriptor
-                        WHERE pmid = $pmid;"
+    db = MySQL.connect(host, username, password, db = dbname)
+    
+    query_string = "INSERT INTO $results_table (pmid, descriptor)
+                    SELECT pmid, descriptor
+                    FROM medline.mesh
+                    JOIN $umls_table ON $(umls_table).STR = descriptor
+                    WHERE pmid = $pmid;"
 
-        MySQL.execute!(db, query_string)
+    MySQL.execute!(db, query_string)
 
-        MySQL.disconnect(db)
-    catch
-        error("Failed to process PMDI $pmid - could be a connection error")
-    end
+    MySQL.disconnect(db)
 end
     
 """
@@ -52,7 +46,7 @@ function save_semantic_occurrences(mesh::String, umls_concepts::String...; overw
                             FROM medline.mesh
                         WHERE descriptor = '$mesh' """;
 
-    articles_df = MySQL.execute!(db, query_string)
+    articles_df = MySQL.query(db, query_string, DataFrame)
     total_articles = length(articles_df[:pmid])
     info("$(length(articles_df[:pmid])) Articles related to MH:$mesh")
     
@@ -76,7 +70,7 @@ function save_semantic_occurrences(mesh::String, umls_concepts::String...; overw
 
         #does table exist?
         query_string = "SHOW TABLES LIKE '$(results_table)' "
-        sel = MySQL.execute!(db, query_string)
+        sel = MySQL.query(db, query_string, DataFrame)
         table_exists = size(sel,1) == 1 ? true:false
 
         if table_exists           
@@ -110,7 +104,9 @@ function get_semantic_occurrences_df(mesh::String, umls_concepts::String...)
 
     db = DatabaseConnection().con
 
-    results_df = DataFrame()
+
+    results_df = DataFrame(pmid=Array{Union{Int32, Missings.Missing},1}(), 
+                           descriptor=Array{Union{String, Missings.Missing},1}())
     
     for concept in umls_concepts
         umls_table = UMLS2MESHTable[concept]
@@ -122,7 +118,7 @@ function get_semantic_occurrences_df(mesh::String, umls_concepts::String...)
         query_string = "SELECT *
                         FROM $results_table;"
         
-        results_df = [results_df; MySQL.execute!(db, query_string)]
+        results_df = [results_df; MySQL.query(db, query_string, DataFrame)]
     end
 
     MySQL.disconnect(db)
