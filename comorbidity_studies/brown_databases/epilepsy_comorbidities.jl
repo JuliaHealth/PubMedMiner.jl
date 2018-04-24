@@ -88,7 +88,7 @@ relayout!(p, title="Co-occurrances between top 50 MeSH terms")
 JupyterPlot(p)
 
 using ARules
-using DataTables
+using DataFrames
 
 # Remove serch MeSH (set column to 0). Rules of lenght 2 with search term correspond to histogram, 
 # since it is in every transaction
@@ -102,7 +102,7 @@ mh_lkup = convert(DataStructures.OrderedDict{String,Int16}, mesh_frequencies.dic
 
 #Pretty print of rules
 mh_lkup = Dict(zip(values(mesh_frequencies.dicts[2]), keys(mesh_frequencies.dicts[2])))
-rules_dt= ARules.rules_to_datatable(mh_rules, mh_lkup, join_str = " | ");
+rules_dt= ARules.rules_to_dataframe(mh_rules, mh_lkup, join_str = " | ");
 
 println(head(rules_dt))
 println("Found ", size(rules_dt, 1), " rules")
@@ -113,7 +113,7 @@ supp_int = round(Int, 0.001 * size(mh_occ, 1))
 supp_lkup = gen_support_dict(root, size(mh_occ, 1))
 item_lkup = mesh_frequencies.dicts[2]
 item_lkup_t = Dict(zip(values(item_lkup), keys(item_lkup)))
-freq = ARules.suppdict_to_datatable(supp_lkup, item_lkup_t);
+freq = ARules.suppdict_to_dataframe(supp_lkup, item_lkup_t);
 
 println(head(freq))
 println("Found ", size(freq, 1), " frequent itemsets")
@@ -155,5 +155,3 @@ trace=sankey(orientation="h",
 layout = Layout(width=900, height=1100)
 
 plot([trace], layout)
-
-
