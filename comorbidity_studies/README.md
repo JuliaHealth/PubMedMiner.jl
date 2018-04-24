@@ -21,7 +21,7 @@ For more information or help setting up your user, contact us.
 * PlotlyJSFactory - `Pkg.clone("https://github.com/mirestrepo/PlotlyJSFactory.jl.git")`
 
 #### Registered:
-* DataTables.jl - `Pkg.add("DataTables")`
+* DataFrames.jl - `Pkg.add("DataFrames")`
 * FreqTables.jl - `Pkg.add("FreqTables")`
 * PlotlyJS.jl - `Pkg.add("PlotlyJS")` 
     * If Sankey Diagram is not available, checkout master: `Pkg.checkout("PlotlyJS")`
