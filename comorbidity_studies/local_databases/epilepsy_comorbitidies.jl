@@ -88,7 +88,7 @@ function epilepsy_comorbidities(; results_dir = "results/",
 
 
     # 2. PubMed Search
-    info("----------------Start: pubmed_search_and_save")    
+    info("----------------Start: pubmed_search_and_save")
     @time if run_pubmed_search_and_save
         email= ENV["NCBI_EMAIL"]
         search_term="(epilepsy [mh])"
@@ -101,7 +101,7 @@ function epilepsy_comorbidities(; results_dir = "results/",
     info("----------------Done: pubmed_search_and_save")
 
     #3. MAP all MeSH to UMLS concepts
-    info("----------------Start: run_mesh2umls_map")       
+    info("----------------Start: run_mesh2umls_map")
     @time if run_mesh2umls_map
 
         if db == nothing
@@ -114,11 +114,11 @@ function epilepsy_comorbidities(; results_dir = "results/",
 
         map_mesh_to_umls_async!(db, credentials; append_results=append)
     end
-    info("----------------Done: run_mesh2umls_map")       
-    
+    info("----------------Done: run_mesh2umls_map")
+
 
     #4. Filter those that are only Psychiatric Mental Disorders
-    info("----------------Start: filter_semantic_occurrences")          
+    info("----------------Start: filter_semantic_occurrences")
     @time if filter_semantic_occurrences
 
         if db == nothing
@@ -135,7 +135,7 @@ function epilepsy_comorbidities(; results_dir = "results/",
         labels2ind, occur = umls_semantic_occurrences(db, comorbidity_concept)
 
         println("-------------------------------------------------------------")
-        println("Output Descritor to Index Dictionary")
+        println("Output Descriptor to Index Dictionary")
         println(labels2ind)
         println("-------------------------------------------------------------")
 
@@ -152,8 +152,8 @@ function epilepsy_comorbidities(; results_dir = "results/",
          write(file, "labels2ind", labels2ind)
         end
     end
-    info("----------------Done: filter_semantic_occurrences")          
-    
+    info("----------------Done: filter_semantic_occurrences")
+
 
 
     #5. Plot comorbidities graph
