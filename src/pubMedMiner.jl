@@ -1,8 +1,8 @@
 """
     PubMedMiner
-    
+
 Utilities to mine results from a PubMed/Medline search
-Authors: Isabel Restrepo
+Authors: Isabel Restrepo, Mary McGrath
 BCBI - Brown University
 """
 module PubMedMiner
