@@ -10,9 +10,6 @@ module PubMedMiner
 using MySQL
 using DataFrames
 
-export DatabaseConnection
-include("common.jl")
-
 # """
 # ServerDB modules includes all functions that assume as Database Server with access MySQL databases for MEDLINE,
 # UMLS Metathesaurus and precomputed PuBMedMiner - more information on the schema to come.
@@ -20,7 +17,8 @@ include("common.jl")
 # module ServerDB
 export get_semantic_occurrences_df,
     get_plotting_inputs
-include("ServerDB.jl")
+include("Stats.jl")
+include("MySQL_DB.jl")
 
 # end #ServerDB
 

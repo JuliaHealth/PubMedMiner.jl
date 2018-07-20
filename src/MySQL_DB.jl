@@ -1,3 +1,6 @@
+using MySQL
+using DataFrames
+
 """
 DatabaseSettings
 
@@ -31,7 +34,7 @@ struct DatabaseSettings
         host = ""
         username = ""
         password = ""
-        dbname="pubmed_comorbidities"    
+        dbname="pubmed_comorbidities"
         try
             host = ENV["PUBMEDMINER_DB_HOST"]
             username = ENV["PUBMEDMINER_DB_USER"]
@@ -78,41 +81,44 @@ end
 
 
 """
-MeshLookup
+    get_semantic_occurrences_df(mesh, umls_concepts...)
 
-Reversible lookup dictionary from mesh terms to matrix index
+Given a mesh descriptor and filtering UMLS concepts, returns a DataFrame with
+PMIDs and related mesh descriptor filtered by the concepts.
 """
-type MeshLookup
-    idx2MeSH::Dict{Int, String}
-    MeSH2idx::Dict{String, Int}
+function get_semantic_occurrences_df(mesh::String, umls_concepts::String...)
 
-    MeshLookup() = new()
-    MeshLookup(idx2MeSH::Dict{Int, String}, MeSH2idx::Dict{String, Int}) = new(idx2MeSH, MeSH2idx)
-end
+    db = PubMedMiner.DatabaseConnection().con
 
-"""
-PaperLookup
+    concept_string = "'"*join(umls_concepts,"','")*"'"
 
-Reversible lookup dictionary from paper id to matrix index
-"""
-type PaperLookup
-    idx2pmid::Dict{Int, Int}
-    pmid2idx::Dict{Int, Int}
-end
+    # select pmids from medline which use the mesh descriptor
+    query_string = """ SELECT mh.pmid, mrc.str as descriptor
+                    FROM medline_new_2.mesh_heading mh
 
-"""
-AbtractsData
+                    JOIN (select uid from medline_new_2.mesh_desc where name = '$mesh') md
+                    ON md.uid <> mh.desc_uid
 
-Hold data matrices and lookup dictionaries related to the abstracts data matrix
-"""
-type OccurrenceData
-    
-    occurrence_data_matrix::SparseMatrixCSC{Float64,Int64}
-    paper_lookup::PaperLookup
-    mesh_lookup::MeshLookup
+                    JOIN pubmed_comorbidities.ALL_MESH mrc
+                    ON mrc.uid = mh.desc_uid
 
-    OccurrenceData() = new()
-    OccurrenceData(occurrence_data_matrix::SparseMatrixCSC{Float64,Int64},
-                   mesh_lookup::MeshLookup) = new(occurrence_data_matrix, mesh_lookup)
+                    JOIN umls_meta.MRSTY mrs
+                    ON mrc.cui = mrs.cui
+
+                    JOIN medline_new_2.mesh_heading mh2
+                    ON mh2.pmid = mh.pmid
+
+                    join (select uid from medline_new_2.mesh_desc where name = '$mesh') md2
+                    on md2.uid = mh2.desc_uid
+
+                    WHERE mrs.sty in ($concept_string); """;
+
+    articles_df = MySQL.query(db, query_string, DataFrame)
+
+    MySQL.disconnect(db)
+
+    unique!(articles_df)
+
+    return articles_df
 
 end
