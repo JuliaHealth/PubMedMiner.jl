@@ -11,7 +11,7 @@ mutable struct Stats
     topn_mesh_counts::Vector{Integer}
 
     pmi_sp::SparseMatrixCSC{Float64,Integer}
-    top_chi2::LowerTriangular
+    top_coo_sp::SparseMatrixCSC{Int64, Int64}
     corrcoef::Array{Float64}
 
     mh_rules::Array{ARules.Rule}
@@ -84,7 +84,7 @@ function get_plotting_inputs(mesh_df::DataFrame, topn::Integer=50)
     #Point Mutual Information
     pmi_sp = BCBIStats.COOccur.pmi_mat(top_coo_sp)
     #chi2
-    top_chi2= BCBIStats.COOccur.chi2_mat(top_occ, min_freq=0)
+    # top_chi2= BCBIStats.COOccur.chi2_mat(top_occ, min_freq=0) NOT USED RIGHT NOW
     #correlation
     corrcoef = BCBIStats.COOccur.corrcoef(top_occ);
 
@@ -121,7 +121,7 @@ function get_plotting_inputs(mesh_df::DataFrame, topn::Integer=50)
         top_mesh_labels,
         topn_mesh,
         pmi_sp,
-        top_chi2,
+        top_coo_sp,
         corrcoef,
         mh_rules,
         rules_df,
