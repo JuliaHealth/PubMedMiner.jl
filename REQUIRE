@@ -2,3 +2,8 @@ julia 0.6
 
 MySQL
 DataFrames
+BCBIStats.COOccur
+StatsBase
+FreqTables
+NamedArrays
+ARules

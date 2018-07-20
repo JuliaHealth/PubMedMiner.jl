@@ -18,8 +18,8 @@ include("common.jl")
 # UMLS Metathesaurus and precomputed PuBMedMiner - more information on the schema to come.
 # """
 # module ServerDB
-export save_semantic_occurrences,
-       get_semantic_occurrences_df
+export get_semantic_occurrences_df,
+    get_plotting_inputs
 include("ServerDB.jl")
 
 # end #ServerDB
