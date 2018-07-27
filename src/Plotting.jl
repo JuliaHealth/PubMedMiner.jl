@@ -6,7 +6,7 @@ using PlotlyJSFactory
 
 Plots topn mesh terms vs their counts.
 """
-function bar_plot_topn(mesh_names::Array{String}, mesh_counts::Array{Integer})
+function plot_bar_topn(mesh_names::Array{String}, mesh_counts::Array{Integer})
     #traces
     freq_trace = PlotlyJS.bar(; x = mesh_names, y= mesh_counts, marker_color="orange")
 
@@ -14,7 +14,7 @@ function bar_plot_topn(mesh_names::Array{String}, mesh_counts::Array{Integer})
 
     topn = length(mesh_names)
 
-    layout = Layout(;title="$(topn)-Most Frequent MeSH",
+    layout = Layout(;title="$(topn) Most Frequent MeSH",
                      showlegend=false,
                      margin= Dict(:t=> 70, :r=> 0, :l=> 50, :b=>200),
                      xaxis_tickangle = 90,)

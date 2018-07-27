@@ -61,7 +61,7 @@ end
 
 Given a dataframe with PMIDs and Mesh Terms, returns various statistics for plotting
 """
-function get_plotting_inputs(mesh_df::DataFrame, topn::Integer=50)
+function mesh_stats(mesh_df::DataFrame, topn::Integer=50)
 
     # convert dataframe to frequency table
     mesh_frequencies = freqtable(mesh_df, :pmid, :descriptor)
