@@ -34,8 +34,6 @@ function get_semantic_occurrences_df(db::MySQL.Connection, mesh::String, umls_co
 
     articles_df = MySQL.query(db, query_string, DataFrame)
 
-    MySQL.disconnect(db)
-
     unique!(articles_df)
 
     return articles_df

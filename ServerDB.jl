@@ -1,87 +1,76 @@
-using MySQL
-using DataFrames
-
-"""
-DatabaseSettings
-
-Database Settings for Brown University Host
-"""
-
-struct DatabaseSettings
-    host::String
-    username::String
-    password::String
-    dbname::String
-
-    function DatabaseSettings(dbname::String)
-        host = ""
-        username = ""
-        password = ""
-        try
-            host = ENV["PUBMEDMINER_DB_HOST"]
-            username = ENV["PUBMEDMINER_DB_USER"]
-            password = ENV["PUBMEDMINER_DB_PSSWD"]
-        catch
-            error("""DatabaseSettings constructor requiers:
-            ENV["PUBMEDMINER_DB_HOST"], ENV["PUBMEDMINER_DB_USER"] and ENV["PUBMEDMINER_DB_PSSWD"]""")
-        end
-
-        ds = new(host, username, password, dbname)
-    end
-
-
-    function DatabaseSettings()
-        host = ""
-        username = ""
-        password = ""
-        dbname="pubmed_comorbidities"
-        try
-            host = ENV["PUBMEDMINER_DB_HOST"]
-            username = ENV["PUBMEDMINER_DB_USER"]
-            password = ENV["PUBMEDMINER_DB_PSSWD"]
-        catch
-            error("""DatabaseSettings constructor requiers:
-            ENV["PUBMEDMINER_DB_HOST"], ENV["PUBMEDMINER_DB_USER"] and ENV["PUBMEDMINER_DB_PSSWD"]""")
-        end
-
-        ds = new(host, username, password, dbname)
-    end
-
-    DatabaseSettings(host::String, username::String,
-                    password::String, dbname::String) = new(host, username, password, dbname)
-end
-
-"""
-DatabaseConnection
-
-Database connection for Brown University Host
-"""
-
-struct DatabaseConnection
-    con::MySQL.MySQLHandle
-
-    function DatabaseConnection(dbname::String)
-        ds = DatabaseSettings(dbname)
-        con = MySQL.connect(ds.host, ds.username, ds.password, db = ds.dbname)
-        this = new(con)
-    end
-
-
-    function DatabaseConnection()
-        ds = DatabaseSettings()
-        con = MySQL.connect(ds.host, ds.username, ds.password, db = ds.dbname)
-        this = new(con)
-    end
-
-    function DatabaseConnection(host::String, username::String, password::String, dbname::String)
-        con = MySQL.connect(host, username, password, dbname)
-        this = new(con)
-    end
-end
-
 using HTTP
 using PubMedMiner
 using MySQL
+using DataFrames
+using JSON
+
+const host = ENV["PUBMEDMINER_DB_HOST"]
+const username = ENV["PUBMEDMINER_DB_USER"]
+const password = ENV["PUBMEDMINER_DB_PSSWD"]
+
+opts = Dict(MySQL.API.MYSQL_ENABLE_CLEARTEXT_PLUGIN => 1, MySQL.API.MYSQL_OPT_RECONNECT => 1)
+conn = MySQL.connect(host, username, password, opts=opts)
+
+all_mesh = MySQL.query(conn, """select uid, str from pubmed_comorbidities.ALL_MESH""", DataFrame)
+all_concepts = MySQL.query(conn, """select distinct tui, sty from umls_meta.MRSTY""", DataFrame)
+
+function to_json(stats::T) where T<:PubMedMiner.Stats
+
+    json_dict = Dict{String,Any}()
+
+    println("Line 21")
+
+    for field in fieldnames(T)
+        json_dict[String(field)] = getfield(stats, field)
+    end
+
+    println("Line27")
+
+    io = IOBuffer()
+
+    # return JSON.print(io, json_dict)
+    return JSON.json(json_dict)
+
+end
+
+function get_body(mesh_uid::String, concept_tui::String)
+
+    mesh_int = parse(Int, mesh_uid)
+
+    mesh_name = all_mesh[find(all_mesh[:uid] .== mesh_int), 2][1]
+
+    concept_tuis = String.(split(concept_tui, ","))
+    sort!(concept_tuis)
+
+    concept_str = join(concept_tuis," | ")
+
+    res = MySQL.query(conn, "select body from pubmed_comorbidities.query_cache where mesh_uid=$mesh_int and concepts='$concept_str'", DataFrame)
+
+    if size(res) == (0,1)
+
+        concepts = []
+
+        for tui in concept_tuis
+            push!(concepts, all_concepts[find(all_concepts[:tui] .== tui), :sty][1])
+        end
+
+        df = get_semantic_occurrences_df(conn, mesh_name, concepts...)
+        stats = mesh_stats(df, 50)
+
+        println("Line57")
+
+        ret = to_json(stats)
+
+        println("Line 61")
+
+        MySQL.execute!(conn, "insert into pubmed_comorbidities.query_cache (mesh_uid,concepts,body) VALUES ($mesh_int,'$concept_str','$ret')")
+
+        return ret
+    else
+        return res[1,1]
+    end
+
+end
 
 function run_server()
 
@@ -96,6 +85,8 @@ function run_server()
         uri = parse(HTTP.URI, request.target)
         query_dict = HTTP.queryparams(uri)
 
+        showall(query_dict)
+
         headers = Dict{AbstractString,AbstractString}(
             "Server"            => "Julia/$VERSION",
             "Content-Type"      => "text/html; charset=utf-8",
@@ -103,9 +94,10 @@ function run_server()
             "Date"              => Dates.format(now(Dates.UTC), Dates.RFC1123Format),
             "Access-Control-Allow-Origin" => "*" )
 
-        return HTTP.Response(200, HTTP.Headers(collect(headers)), body = join([String(k)*" - "*String(v) for (k,v) in query_dict],'\n'))
+        return HTTP.Response(200, HTTP.Headers(collect(headers)), body = get_body(query_dict["uid"], query_dict["tui"]))
 
     end
 end
 
 run_server()
+#why the double requests (one with query, one without) - ASK FERNANDO FOR ADVICE

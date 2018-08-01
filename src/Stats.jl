@@ -14,11 +14,11 @@ mutable struct Stats
     top_coo_sp::SparseMatrixCSC{Int64, Int64}
     corrcoef::Array{Float64}
 
-    mh_rules::Array{ARules.Rule}
-    mh_rules_df::DataFrame
-
-    freq_item_tree::ARules.Node
-    freq_item_df::DataFrame
+    # mh_rules::Array{ARules.Rule}
+    # mh_rules_df::DataFrame
+    #
+    # freq_item_tree::ARules.Node
+    # freq_item_df::DataFrame
 
     sankey_sources::Array{Integer}
     sankey_targets::Array{Integer}
@@ -123,10 +123,10 @@ function mesh_stats(mesh_df::DataFrame, topn::Integer=50)
         pmi_sp,
         top_coo_sp,
         corrcoef,
-        mh_rules,
-        rules_df,
-        root,
-        freq,
+        # mh_rules,
+        # rules_df,
+        # root,
+        # freq,
         s,
         t,
         v
