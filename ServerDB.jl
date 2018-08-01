@@ -18,13 +18,9 @@ function to_json(stats::T) where T<:PubMedMiner.Stats
 
     json_dict = Dict{String,Any}()
 
-    println("Line 21")
-
     for field in fieldnames(T)
         json_dict[String(field)] = getfield(stats, field)
     end
-
-    println("Line27")
 
     io = IOBuffer()
 
@@ -57,11 +53,7 @@ function get_body(mesh_uid::String, concept_tui::String)
         df = get_semantic_occurrences_df(conn, mesh_name, concepts...)
         stats = mesh_stats(df, 50)
 
-        println("Line57")
-
         ret = to_json(stats)
-
-        println("Line 61")
 
         MySQL.execute!(conn, "insert into pubmed_comorbidities.query_cache (mesh_uid,concepts,body) VALUES ($mesh_int,'$concept_str','$ret')")
 
@@ -84,8 +76,6 @@ function run_server()
 
         uri = parse(HTTP.URI, request.target)
         query_dict = HTTP.queryparams(uri)
-
-        showall(query_dict)
 
         headers = Dict{AbstractString,AbstractString}(
             "Server"            => "Julia/$VERSION",

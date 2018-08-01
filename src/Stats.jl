@@ -70,6 +70,11 @@ function mesh_stats(mesh_df::DataFrame, topn::Integer=50)
     mesh_counts = vec(sum(mesh_frequencies, 1))
     count_perm = sortperm(mesh_counts, rev=true)
     mesh_names = collect(keys(mesh_frequencies.dicts[2]))
+
+    # check if there are topn frequencies, if not use length
+    topn = min(topn, length(mesh_names))
+
+    #RETURN LABELS FOR ALL CHARTS
     top_mesh_labels = mesh_names[count_perm[1:topn]]
 
     #RETURN FOR BAR CHART
