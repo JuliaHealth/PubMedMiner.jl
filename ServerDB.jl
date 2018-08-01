@@ -22,10 +22,24 @@ function to_json(stats::T) where T<:PubMedMiner.Stats
         json_dict[String(field)] = getfield(stats, field)
     end
 
-    io = IOBuffer()
-
     # return JSON.print(io, json_dict)
     return JSON.json(json_dict)
+
+end
+
+function to_json(df::DataFrame)
+
+    pairs = []
+
+    for i = 1:size(df)[1]
+        obj_dict = Dict{String,Any}()
+        for col in df.colindex.names
+            obj_dict[String(col)] = df[i, col]
+        end
+        push!(pairs, JSON.json(obj_dict))
+    end
+
+    return pairs
 
 end
 
@@ -75,7 +89,6 @@ function run_server()
         println("******************")
 
         uri = parse(HTTP.URI, request.target)
-        query_dict = HTTP.queryparams(uri)
 
         headers = Dict{AbstractString,AbstractString}(
             "Server"            => "Julia/$VERSION",
@@ -84,7 +97,16 @@ function run_server()
             "Date"              => Dates.format(now(Dates.UTC), Dates.RFC1123Format),
             "Access-Control-Allow-Origin" => "*" )
 
-        return HTTP.Response(200, HTTP.Headers(collect(headers)), body = get_body(query_dict["uid"], query_dict["tui"]))
+        if uri.path == "/"
+            query_dict = HTTP.queryparams(uri)
+            return HTTP.Response(200, HTTP.Headers(collect(headers)), body = get_body(query_dict["uid"], query_dict["tui"]))
+        elseif uri.path == "/all_mesh"
+            return HTTP.Response(200, HTTP.Headers(collect(headers)), body = to_json(all_mesh))
+        elseif uri.path == "/all_concepts"
+            return HTTP.Response(200, HTTP.Headers(collect(headers)), body = to_json(all_concepts))
+        else
+            return HTTP.Response(400, HTTP.Headers(collect(headers)), body = "unknown request")
+        end
 
     end
 end
