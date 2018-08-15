@@ -39,7 +39,7 @@ function to_json(df::DataFrame)
         push!(pairs, JSON.json(obj_dict))
     end
 
-    return pairs
+    return "[" * join(pairs,",")* "]"
 
 end
 
