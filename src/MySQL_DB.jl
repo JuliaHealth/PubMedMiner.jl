@@ -13,9 +13,9 @@ function get_semantic_occurrences_df(db::MySQL.Connection, mesh::String, umls_co
 
     # select pmids from medline which use the mesh descriptor
     query_string = """ SELECT mh.pmid, mrc.str as descriptor
-                    FROM medline_new_2.mesh_heading mh
+                    FROM medline.mesh_heading mh
 
-                    JOIN (select uid from medline_new_2.mesh_desc where name = '$mesh') md
+                    JOIN (select uid from medline.mesh_desc where name = '$mesh') md
                     ON md.uid <> mh.desc_uid
 
                     JOIN pubmed_comorbidities.ALL_MESH mrc
@@ -24,10 +24,10 @@ function get_semantic_occurrences_df(db::MySQL.Connection, mesh::String, umls_co
                     JOIN umls_meta.MRSTY mrs
                     ON mrc.cui = mrs.cui
 
-                    JOIN medline_new_2.mesh_heading mh2
+                    JOIN medline.mesh_heading mh2
                     ON mh2.pmid = mh.pmid
 
-                    join (select uid from medline_new_2.mesh_desc where name = '$mesh') md2
+                    join (select uid from medline.mesh_desc where name = '$mesh') md2
                     on md2.uid = mh2.desc_uid
 
                     WHERE mrs.sty in ($concept_string); """;
