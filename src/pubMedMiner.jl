@@ -15,7 +15,7 @@ export get_semantic_occurrences_df,
 include("Stats.jl")
 include("MySQL_DB.jl")
 
-include("API_DF.jl")
-include("Plotting.jl")
+# include("API_DF.jl")
+# include("Plotting.jl")
 
 end #PubMedMiner
