@@ -62,10 +62,9 @@ end
 
 Given a dataframe with PMIDs and Mesh Terms, returns various statistics for plotting
 """
-function mesh_stats(mesh_df::DataFrame, topn::Integer=50)
+function mesh_stats(mesh_df::DataFrame, topn::Int=50)
 
     # convert dataframe to frequency table
-    println(mesh_df)
     mesh_frequencies = freqtable(string.(mesh_df[:pmid]), mesh_df[:descriptor])
 
     # find the counts by mesh term, find the top mesh headings, and names
@@ -118,10 +117,12 @@ function mesh_stats(mesh_df::DataFrame, topn::Integer=50)
     # get sankey data
     sources, targets, vals = PubMedMiner.fill_sankey_data(root)
 
+    topn_sankey = min(topn, length(sources))
+
     freq_vals_perm = sortperm(vals, rev=true)
-    s = sources[freq_vals_perm[1:topn]]
-    t = targets[freq_vals_perm[1:topn]]
-    v = vals[freq_vals_perm[1:topn]]
+    s = sources[freq_vals_perm[1:topn_sankey]]
+    t = targets[freq_vals_perm[1:topn_sankey]]
+    v = vals[freq_vals_perm[1:topn_sankey]]
 
     return PubMedMiner.Stats(
         mesh_names,

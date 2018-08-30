@@ -73,7 +73,9 @@ function get_body(mesh_uid::String, concept_tui::String)
 
         ret = to_json(stats)
 
-        MySQL.execute!(conn, "insert into pubmed_comorbidities.query_cache (mesh_uid,concepts,body) VALUES ($mesh_int,'$concept_str','$ret')")
+        stmt = MySQL.Stmt(conn, "insert into pubmed_comorbidities.query_cache (mesh_uid,concepts,body) VALUES (?,?,?)")
+
+        MySQL.execute!(stmt, [mesh_int, concept_str,ret])
 
         return ret
     else
