@@ -33,7 +33,7 @@ function to_json(df::DataFrame)
 
     for i = 1:size(df)[1]
         obj_dict = Dict{String,Any}()
-        for col in df.colindex.names
+        for col in getfield(df, :colindex).names
             obj_dict[String(col)] = df[i, col]
         end
         push!(pairs, JSON.json(obj_dict))
@@ -45,9 +45,13 @@ end
 
 function get_body(mesh_uid::String, concept_tui::String)
 
+    # HARDCODING THIS FOR NOW SO I CAN KEEP WORKING ON THE FRONTEND
+    # mesh_uid ="2"
+    # concept_tui="T114,T116"
+
     mesh_int = parse(Int, mesh_uid)
 
-    mesh_name = all_mesh[find(all_mesh[:uid] .== mesh_int), 2][1]
+    mesh_name = all_mesh[findall(all_mesh[:uid] .== mesh_int), 2][1]
 
     concept_tuis = String.(split(concept_tui, ","))
     sort!(concept_tuis)
@@ -61,7 +65,7 @@ function get_body(mesh_uid::String, concept_tui::String)
         concepts = []
 
         for tui in concept_tuis
-            push!(concepts, all_concepts[find(all_concepts[:tui] .== tui), :sty][1])
+            push!(concepts, all_concepts[findall(all_concepts[:tui] .== tui), :sty][1])
         end
 
         df = get_semantic_occurrences_df(conn, mesh_name, concepts...)
@@ -99,7 +103,7 @@ function run_server()
 
         if uri.path == "/"
             query_dict = HTTP.queryparams(uri)
-            return HTTP.Response(200, HTTP.Headers(collect(headers)), body = get_body(query_dict["uid"], query_dict["tui"]))
+            return HTTP.Response(200, HTTP.Headers(collect(headers)), body = get_body(string(query_dict["uid"]), string(query_dict["tui"])))
         elseif uri.path == "/all_mesh"
             return HTTP.Response(200, HTTP.Headers(collect(headers)), body = to_json(all_mesh))
         elseif uri.path == "/all_concepts"

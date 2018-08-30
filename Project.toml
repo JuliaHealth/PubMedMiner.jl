@@ -11,6 +11,7 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 FreqTables = "da1fdf0e-e0ff-5433-a45f-9bb5ff651cb1"
 MySQL = "39abe10b-433b-5dbd-92d4-e302a9df00cd"
 NamedArrays = "86f7a689-2022-50b4-a561-43c23ac3c673"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [extras]

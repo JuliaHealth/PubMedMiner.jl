@@ -3,6 +3,7 @@ using StatsBase
 using FreqTables
 using NamedArrays
 using ARules
+using SparseArrays
 
 mutable struct Stats
     mesh_names::Vector{String}
@@ -64,7 +65,8 @@ Given a dataframe with PMIDs and Mesh Terms, returns various statistics for plot
 function mesh_stats(mesh_df::DataFrame, topn::Integer=50)
 
     # convert dataframe to frequency table
-    mesh_frequencies = freqtable(mesh_df, :pmid, :descriptor)
+    println(mesh_df)
+    mesh_frequencies = freqtable(string.(mesh_df[:pmid]), mesh_df[:descriptor])
 
     # find the counts by mesh term, find the top mesh headings, and names
     mesh_counts = vec(sum(mesh_frequencies, 1))
@@ -137,4 +139,47 @@ function mesh_stats(mesh_df::DataFrame, topn::Integer=50)
         v
     )
 
+end
+
+
+function indexdict(arr::AbstractArray{T,1}) where T
+    dict = Dict{T, Int64}()
+
+    for (i,val) in pairs(IndexLinear(), arr)
+        dict[val] = i
+    end
+
+    return dict
+end
+
+function freq_table(col1::Array{T,1}, col2::Array{S,1}) where {T,S}
+    cols = unique(col1)
+    rows = unique(col2)
+
+    colDict = indexDict(cols)
+    rowDict = indexDict(rows)
+
+    arr = zeros(Int64, length(rows), length(cols))
+
+    for (i, val) in pairs(IndexLinear(), col1)# i = 1:length(col1)
+        arr[rowDict[col2[i]], colDict[val]] = 1
+    end
+
+    return (arr, cols, rows)
+end
+
+function freq_table2(col1::Array{T,1}, col2::Array{S,1}) where {T,S}
+    cols = unique(col1)
+    rows = unique(col2)
+
+    colDict = indexDict(cols)
+    rowDict = indexDict(rows)
+
+    arr = zeros(Int64, length(rows), length(cols))
+
+    @inbounds for i = 1:length(col1)
+        arr[rowDict[col2[i]], colDict[col1[i]]] = 1
+    end
+
+    return (arr, cols, rows)
 end
