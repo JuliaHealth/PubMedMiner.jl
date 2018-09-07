@@ -1,15 +1,16 @@
-language: julia
-os:
-  - linux
-  - osx
-julia:
-  - 0.6
-notifications:
-  email: false
-script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); Pkg.build("PubMedMiner"); Pkg.test("PubMedMiner"; coverage=true)'
-# after_success:
-  # - julia -e 'Pkg.add("Documenter")'
-  # - julia -e 'cd(Pkg.dir("PubMedMiner")); include(joinpath("docs", "make.jl"))'
-  # - julia -e 'cd(Pkg.dir("PubMedMiner")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+git:
+  depth: 10
+dist: trusty
+sudo: required
+
+matrix:
+  include:
+    - stage: build docker image
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker build -t pubmedminer-api .
+        - docker images
+        - docker tag pubmedminer-api $DOCKER_ORGANIZATION/pubmedminer-api
+        - docker push $DOCKER_ORGANIZATION/pubmedminer-api
+      on:
+        branch: master
