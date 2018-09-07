@@ -20,7 +20,9 @@ version = "0.2.3"
 
 [[BCBIStats]]
 deps = ["Distributions", "StatsBase"]
-path = "/Users/mmcgrat3/.julia/dev/BCBIStats"
+git-tree-sha1 = "9933dd0a11fb4919d999588ebb43af362dabf357"
+repo-rev = "master"
+repo-url = "https://github.com/bcbi/BCBIStats.jl.git"
 uuid = "90663416-1ff1-5773-9c80-87bbd7add2fc"
 version = "0.0.0"
 
@@ -118,10 +120,10 @@ deps = ["LinearAlgebra", "Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[Distributions]]
-deps = ["Distributed", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
-git-tree-sha1 = "c43dc10a52598ad76d61f8907b3b30f159ca146f"
+deps = ["Distributed", "LinearAlgebra", "PDMats", "Pkg", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
+git-tree-sha1 = "07f0e38d8a9c8151af4d843500de1bf0baa59dca"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.16.2"
+version = "0.16.3"
 
 [[EzXML]]
 deps = ["BinaryProvider", "Libdl", "Pkg", "Printf", "Test"]
@@ -136,20 +138,20 @@ uuid = "01fcc997-4f28-56b8-8a06-30002c134abb"
 version = "0.5.0"
 
 [[FreqTables]]
-deps = ["CategoricalArrays", "DataFrames", "NamedArrays"]
-git-tree-sha1 = "eb91ec4c3063d36c2780d475a1ae9eb52f265a63"
+deps = ["CategoricalArrays", "DataFrames", "NamedArrays", "Pkg", "Test"]
+git-tree-sha1 = "93c716efd3c37f80c4537959fc55311ab530850d"
 uuid = "da1fdf0e-e0ff-5433-a45f-9bb5ff651cb1"
-version = "0.2.2"
+version = "0.3.0"
 
 [[Future]]
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[Gumbo]]
-deps = ["AbstractTrees", "BinaryProvider", "Libdl", "Pkg", "SHA", "Test"]
-git-tree-sha1 = "9129bb34e8ec20cbe78b6d7be6d67f5a711d3b0f"
+deps = ["AbstractTrees", "BinaryProvider", "Libdl", "Pkg", "Test"]
+git-tree-sha1 = "b16b6c5127e8c6be3084e6658c5fb5dd1f97d7fd"
 uuid = "708ec375-b3d6-5a57-a7ce-8257bf98657a"
-version = "0.5.0"
+version = "0.5.1"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "Distributed", "IniFile", "MbedTLS", "Sockets", "Test"]
@@ -242,12 +244,10 @@ uuid = "39abe10b-433b-5dbd-92d4-e302a9df00cd"
 version = "0.6.0"
 
 [[NamedArrays]]
-deps = ["Combinatorics", "DataStructures", "DelimitedFiles", "LinearAlgebra", "Random", "Requires", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "66f0b1932aac208f11b6511521b2b0dd1a5551c2"
-repo-rev = "Master"
-repo-url = "https://github.com/davidavdav/NamedArrays.jl.git"
+deps = ["Combinatorics", "DataStructures", "DelimitedFiles", "InteractiveUtils", "LinearAlgebra", "Pkg", "Random", "Requires", "SparseArrays", "Statistics", "Test"]
+git-tree-sha1 = "3099281fe5bcccb0cc329655a2b07e0d85e978ca"
 uuid = "86f7a689-2022-50b4-a561-43c23ac3c673"
-version = "0.7.0+"
+version = "0.9.1"
 
 [[PDMats]]
 deps = ["Arpack", "LinearAlgebra", "SparseArrays", "SuiteSparse", "Test"]
@@ -271,9 +271,9 @@ uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [[QuadGK]]
 deps = ["DataStructures", "LinearAlgebra", "Test"]
-git-tree-sha1 = "7d61ca207f021be6574b365a1a077bea04935f19"
+git-tree-sha1 = "7e8dff9c205f36eceaf6e62a43ff851637ca45fc"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
-version = "2.0.1"
+version = "2.0.2"
 
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets"]

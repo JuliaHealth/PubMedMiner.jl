@@ -3,6 +3,7 @@ using PubMedMiner
 using MySQL
 using DataFrames
 using JSON
+using Dates
 
 const host = ENV["PUBMEDMINER_DB_HOST"]
 const username = ENV["PUBMEDMINER_DB_USER"]
@@ -44,10 +45,6 @@ function to_json(df::DataFrame)
 end
 
 function get_body(mesh_uid::String, concept_tui::String)
-
-    # HARDCODING THIS FOR NOW SO I CAN KEEP WORKING ON THE FRONTEND
-    # mesh_uid ="2"
-    # concept_tui="T114,T116"
 
     mesh_int = parse(Int, mesh_uid)
 
@@ -96,14 +93,26 @@ function run_server()
 
         uri = parse(HTTP.URI, request.target)
 
+        origin = HTTP.header(request, "Origin")
+        send = true
+
+        if !contains(origin, r"^.*(localhost|bcbi\.brown\.edu).*$")
+            origin = "https://bcbi.brown.edu"
+            send = false
+        end
+
+
         headers = Dict{AbstractString,AbstractString}(
             "Server"            => "Julia/$VERSION",
             "Content-Type"      => "text/html; charset=utf-8",
             "Content-Language"  => "en",
             "Date"              => Dates.format(now(Dates.UTC), Dates.RFC1123Format),
-            "Access-Control-Allow-Origin" => "*" )
+            "Access-Control-Allow-Origin" => origin,
+            "Access-Control-Allow-Methods" => "GET" )
 
-        if uri.path == "/"
+        if !send
+            return HTTP.Response(403, HTTP.Headers(collect(headers)), body = "Access forbidden")
+        elseif uri.path == "/"
             query_dict = HTTP.queryparams(uri)
             return HTTP.Response(200, HTTP.Headers(collect(headers)), body = get_body(string(query_dict["uid"]), string(query_dict["tui"])))
         elseif uri.path == "/all_mesh"

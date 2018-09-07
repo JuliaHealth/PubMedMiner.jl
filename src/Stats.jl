@@ -1,7 +1,6 @@
 using BCBIStats
 using StatsBase
 using FreqTables
-using NamedArrays
 using ARules
 using SparseArrays
 
