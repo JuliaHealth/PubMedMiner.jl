@@ -32,6 +32,8 @@ function get_semantic_occurrences_df(db::MySQL.Connection, mesh::String, umls_co
 
                     WHERE mrs.sty in ($concept_string); """;
 
+    println(query_string)
+
     articles_df = MySQL.query(db, query_string, DataFrame)
 
     unique!(articles_df)

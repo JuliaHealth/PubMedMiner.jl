@@ -14,4 +14,4 @@ EXPOSE 8091
 
 RUN julia -e 'using Pkg; pkg"add HTTP JSON"'
 
-CMD julia -e 'using Pkg; println("activating"); pkg"activate ."; println("instantiating");Pkg.instantiate(); include("ServerDB.jl");'
+CMD julia -e 'using Pkg; pkg"activate ."; Pkg.instantiate(); include("ServerDB.jl");'
