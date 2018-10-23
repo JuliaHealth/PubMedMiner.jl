@@ -1,6 +1,6 @@
 [[ARules]]
 deps = ["DataFrames", "StatsBase"]
-git-tree-sha1 = "4f55cb023470fc9aa22751aaad688272a3bd43ee"
+git-tree-sha1 = "d2a3cf6329919f8c6b532b68332d473f747bb100"
 repo-rev = "master"
 repo-url = "https://github.com/bcbi/ARules.jl.git"
 uuid = "7cbe2057-1070-5a1a-9a20-8e476bfa53e1"
@@ -37,9 +37,9 @@ version = "0.8.10"
 
 [[BinaryProvider]]
 deps = ["Libdl", "Pkg", "SHA", "Test"]
-git-tree-sha1 = "48c147e63431adbcee69bc40b04c3f0fec0a4982"
+git-tree-sha1 = "9930c1a6cd49d9fcd7218df6be417e6ae4f1468a"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
-version = "0.5.0"
+version = "0.5.2"
 
 [[BioMedQuery]]
 deps = ["BioServices", "CSV", "DataFrames", "DataStreams", "Dates", "Distributed", "FTPClient", "HTTP", "LightXML", "MySQL", "SQLite", "SparseArrays", "XMLDict"]
@@ -51,9 +51,9 @@ version = "0.5.0+"
 
 [[BioServices]]
 deps = ["Dates", "Gumbo", "HTTP", "JSON", "Pkg", "Test", "XMLDict"]
-git-tree-sha1 = "45633bc2af795e734530030a081ee4ccd36ab78a"
+git-tree-sha1 = "977883274bb6e4eabd57b797ba5a5c52db858633"
 uuid = "a0d4ced5-b29c-5395-b614-ca030a679c4b"
-version = "0.3.0"
+version = "0.3.1"
 
 [[CSV]]
 deps = ["CategoricalArrays", "DataFrames", "DataStreams", "Dates", "Mmap", "Parsers", "Pkg", "Profile", "Random", "Tables", "Test", "Unicode", "WeakRefStrings"]
@@ -81,15 +81,15 @@ version = "0.7.0"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "ff2595695fc4f14427358ce2593f867085c45dcb"
+git-tree-sha1 = "2d9e14d19bad3f9ad5cc5e4cffabc3cfa59de825"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "1.2.0"
+version = "1.3.0"
 
 [[DataFrames]]
 deps = ["CategoricalArrays", "CodecZlib", "Compat", "DataStreams", "Dates", "InteractiveUtils", "IteratorInterfaceExtensions", "LinearAlgebra", "Missings", "Pkg", "Printf", "Random", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Test", "TranscodingStreams", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "0fcb0c9914f31e0607b1965dc5a9e15c969c4806"
+git-tree-sha1 = "ad34fefb72b18a8dd5c17fab9089d11111b61935"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-version = "0.14.0"
+version = "0.14.1"
 
 [[DataStreams]]
 deps = ["Dates", "Missings", "Pkg", "Test", "WeakRefStrings"]
@@ -173,9 +173,9 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
 [[IterTools]]
 deps = ["Pkg", "SparseArrays", "Test"]
-git-tree-sha1 = "ed0787e62dc46b8d8c7c3db54391d71e0da5fefd"
+git-tree-sha1 = "3eb252416e1a5215530420cdd22b46208bb9d4c7"
 uuid = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
-version = "1.0.0"
+version = "1.1.0"
 
 [[IteratorInterfaceExtensions]]
 deps = ["Test"]
