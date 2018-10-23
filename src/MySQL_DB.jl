@@ -21,7 +21,7 @@ function get_semantic_occurrences_df(db::MySQL.Connection, mesh::String, umls_co
                     JOIN pubmed_comorbidities.ALL_MESH mrc
                     ON mrc.uid = mh.desc_uid
 
-                    JOIN umls_meta.MRSTY mrs
+                    JOIN pubmed_comorbidities.MRSTY_FOR_MESH mrs
                     ON mrc.cui = mrs.cui
 
                     JOIN medline.mesh_heading mh2

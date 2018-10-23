@@ -6,8 +6,10 @@ using JSON
 using Dates
 
 const host = ENV["PUBMEDMINER_DB_HOST"]
-const username = ENV["PUBMEDMINER_DB_USER"]
-const password = ENV["PUBMEDMINER_DB_PSSWD"]
+# const username = ENV["PUBMEDMINER_DB_USER"]
+# const password = ENV["PUBMEDMINER_DB_PSSWD"]
+const username = ENV["PURSA_DB_USER"]
+const password = ENV["PURSA_DB_PSSWD"]
 
 opts = Dict(MySQL.API.MYSQL_ENABLE_CLEARTEXT_PLUGIN => 1, MySQL.API.MYSQL_OPT_RECONNECT => 1)
 conn = MySQL.connect(host, username, password, opts=opts)
@@ -20,7 +22,11 @@ function to_json(stats::T) where T<:PubMedMiner.Stats
     json_dict = Dict{String,Any}()
 
     for field in fieldnames(T)
-        json_dict[String(field)] = getfield(stats, field)
+        if typeof(getfield(stats,field)) == DataFrame
+            json_dict[String(field)] = JSONText(to_json(getfield(stats, field)))
+        else
+            json_dict[String(field)] = getfield(stats, field)
+        end
     end
 
     # return JSON.print(io, json_dict)
@@ -109,6 +115,7 @@ function run_server()
             "Date"              => Dates.format(now(Dates.UTC), Dates.RFC1123Format),
             "Access-Control-Allow-Origin" => origin,
             "Access-Control-Allow-Methods" => "GET" )
+
 
         if !send
             return HTTP.Response(403, HTTP.Headers(collect(headers)), body = "Access forbidden")

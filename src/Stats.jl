@@ -5,6 +5,8 @@ using ARules
 using SparseArrays
 
 mutable struct Stats
+    pmid_count::Int
+
     mesh_names::Vector{String}
 
     topn_mesh_labels::Vector{String}
@@ -15,14 +17,14 @@ mutable struct Stats
     corrcoef::Array{Float64}
 
     # mh_rules::Array{ARules.Rule}
-    # mh_rules_df::DataFrame
+    mh_rules_df::DataFrame
     #
     # freq_item_tree::ARules.Node
     # freq_item_df::DataFrame
 
-    sankey_sources::Array{Integer}
-    sankey_targets::Array{Integer}
-    sankey_vals::Array{Integer}
+    # sankey_sources::Array{Integer}
+    # sankey_targets::Array{Integer}
+    # sankey_vals::Array{Integer}
 end
 
 function fill_sankey_data(node)
@@ -66,6 +68,9 @@ function mesh_stats(mesh_df::DataFrame, topn::Int=50)
     # convert dataframe to frequency table
     mesh_frequencies = freqtable(string.(mesh_df[:pmid]), mesh_df[:descriptor])
 
+    # total number of articles
+    pmid_count = size(mesh_frequencies, 1)
+
     # find the counts by mesh term, find the top mesh headings, and names
     mesh_counts = vec(sum(mesh_frequencies, 1))
     count_perm = sortperm(mesh_counts, rev=true)
@@ -96,34 +101,54 @@ function mesh_stats(mesh_df::DataFrame, topn::Int=50)
     # convert to BitArray
     mh_occ = convert(BitArray{2}, mesh_frequencies.array)
 
+    # ARules
+
+    top_mesh_df = filter(row -> row[:descriptor] in top_mesh_labels, mesh_df)
+
+    fsets = Array{Array{String,1},1}()
+    idx = Dict{Int32,Int}()
+
+    for i = 1:size(top_mesh_df)[1]
+      if haskey(idx, top_mesh_df[i,:pmid])
+        push!(fsets[idx[top_mesh_df[i,:pmid]]], top_mesh_df[i,:descriptor])
+      else
+        push!(fsets, [top_mesh_df[i,:descriptor]])
+        idx[top_mesh_df[i,:pmid]] = length(fsets)
+      end
+    end
+
+
     # find ARules - not actually used in plots?
-    mh_rules = apriori(mh_occ, supp = 0.001, conf = 0.1, maxlen = 9)
+    mh_rules = apriori(fsets, supp = 0.001, conf = 0, maxlen = 9)
 
-    # ARules to DF
-    mh_lkup = Dict(zip(values(mesh_frequencies.dicts[2]), keys(mesh_frequencies.dicts[2])))
-    rules_df= ARules.rules_to_dataframe(mh_rules, mh_lkup, join_str = " | ");
-
-    # generate frequent item sets tree given supp
-    supp_int = round(Int, 0.001 * size(mh_occ, 1))
-    root = frequent_item_tree(mh_occ, supp_int, 9);
-
-    # frequent item sets to df
-    supp_lkup = gen_support_dict(root, size(mh_occ, 1))
-    item_lkup = mesh_frequencies.dicts[2]
-    item_lkup_t = Dict(zip(values(item_lkup), keys(item_lkup)))
-    freq = ARules.suppdict_to_dataframe(supp_lkup, item_lkup_t)
-
-    # get sankey data
-    sources, targets, vals = PubMedMiner.fill_sankey_data(root)
-
-    topn_sankey = min(topn, length(sources))
-
-    freq_vals_perm = sortperm(vals, rev=true)
-    s = sources[freq_vals_perm[1:topn_sankey]]
-    t = targets[freq_vals_perm[1:topn_sankey]]
-    v = vals[freq_vals_perm[1:topn_sankey]]
+    # # ARules to DF
+    # mh_lkup = Dict(zip(values(mesh_frequencies.dicts[2]), keys(mesh_frequencies.dicts[2])))
+    # rules_df= ARules.rules_to_dataframe(mh_rules, mh_lkup, join_str = " | ");
+    #
+    # # generate frequent item sets tree given supp
+    # supp_int = round(Int, 0.001 * size(mh_occ, 1))
+    # root = frequent_item_tree(mh_occ, supp_int, 9);
+    #
+    # # frequent item sets to df
+    # supp_lkup = gen_support_dict(root, size(mh_occ, 1))
+    # item_lkup = mesh_frequencies.dicts[2]
+    # item_lkup_t = Dict(zip(values(item_lkup), keys(item_lkup)))
+    # freq = ARules.suppdict_to_dataframe(supp_lkup, item_lkup_t)
+    #
+    # frequent = ARules.frequent()
+    #
+    # # get sankey data
+    # sources, targets, vals = PubMedMiner.fill_sankey_data(root)
+    #
+    # topn_sankey = min(topn, length(sources))
+    #
+    # freq_vals_perm = sortperm(vals, rev=true)
+    # s = sources[freq_vals_perm[1:topn_sankey]]
+    # t = targets[freq_vals_perm[1:topn_sankey]]
+    # v = vals[freq_vals_perm[1:topn_sankey]]
 
     return PubMedMiner.Stats(
+        pmid_count,
         mesh_names,
         top_mesh_labels,
         topn_mesh,
@@ -133,53 +158,10 @@ function mesh_stats(mesh_df::DataFrame, topn::Int=50)
         # mh_rules,
         # rules_df,
         # root,
-        # freq,
-        s,
-        t,
-        v
+        mh_rules
+        # s,
+        # t,
+        # v
     )
 
-end
-
-
-function indexdict(arr::AbstractArray{T,1}) where T
-    dict = Dict{T, Int64}()
-
-    for (i,val) in pairs(IndexLinear(), arr)
-        dict[val] = i
-    end
-
-    return dict
-end
-
-function freq_table(col1::Array{T,1}, col2::Array{S,1}) where {T,S}
-    cols = unique(col1)
-    rows = unique(col2)
-
-    colDict = indexDict(cols)
-    rowDict = indexDict(rows)
-
-    arr = zeros(Int64, length(rows), length(cols))
-
-    for (i, val) in pairs(IndexLinear(), col1)# i = 1:length(col1)
-        arr[rowDict[col2[i]], colDict[val]] = 1
-    end
-
-    return (arr, cols, rows)
-end
-
-function freq_table2(col1::Array{T,1}, col2::Array{S,1}) where {T,S}
-    cols = unique(col1)
-    rows = unique(col2)
-
-    colDict = indexDict(cols)
-    rowDict = indexDict(rows)
-
-    arr = zeros(Int64, length(rows), length(cols))
-
-    @inbounds for i = 1:length(col1)
-        arr[rowDict[col2[i]], colDict[col1[i]]] = 1
-    end
-
-    return (arr, cols, rows)
 end
