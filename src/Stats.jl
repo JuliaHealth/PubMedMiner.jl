@@ -16,47 +16,11 @@ mutable struct Stats
     top_coo_sp::SparseMatrixCSC{Int64, Int64}
     corrcoef::Array{Float64}
 
-    # mh_rules::Array{ARules.Rule}
+    mh_rules_pmid_count::Int
     mh_rules_df::DataFrame
-    #
-    # freq_item_tree::ARules.Node
-    # freq_item_df::DataFrame
 
-    # sankey_sources::Array{Integer}
-    # sankey_targets::Array{Integer}
-    # sankey_vals::Array{Integer}
 end
 
-function fill_sankey_data(node)
-    sources = Array{Integer}(0)
-    targets = Array{Integer}(0)
-    vals = Array{Integer}(0)
-    if length(node.item_ids) >1
-        push!(sources, node.item_ids[end-1]-1)
-        push!(targets, node.item_ids[end]-1)
-        push!(vals, node.supp)
-    end
-    if has_children(node)
-        for nd in node.children
-            fill_sankey_data!(nd,  sources, targets, vals)
-        end
-    end
-
-    return sources, targets, vals
-end
-
-function fill_sankey_data!(node, sources, targets, vals)
-    if length(node.item_ids) >1
-        push!(sources, node.item_ids[end-1]-1)
-        push!(targets, node.item_ids[end]-1)
-        push!(vals, node.supp)
-    end
-    if has_children(node)
-        for nd in node.children
-            fill_sankey_data!(nd,  sources, targets, vals)
-        end
-    end
-end
 
 """
     get_plotting_inputs(mesh_df, topn)
@@ -69,7 +33,7 @@ function mesh_stats(mesh_df::DataFrame, topn::Int=50)
     mesh_frequencies = freqtable(string.(mesh_df[:pmid]), mesh_df[:descriptor])
 
     # total number of articles
-    pmid_count = size(mesh_frequencies, 1)
+    pmid_count = length(unique(mesh_df[:pmid]))
 
     # find the counts by mesh term, find the top mesh headings, and names
     mesh_counts = vec(sum(mesh_frequencies, 1))
@@ -117,6 +81,7 @@ function mesh_stats(mesh_df::DataFrame, topn::Int=50)
       end
     end
 
+    mh_rules_pmid_count = idx.count
 
     # find ARules - not actually used in plots?
     mh_rules = apriori(fsets, supp = 0.001, conf = 0, maxlen = 9)
@@ -158,6 +123,7 @@ function mesh_stats(mesh_df::DataFrame, topn::Int=50)
         # mh_rules,
         # rules_df,
         # root,
+        mh_rules_pmid_count,
         mh_rules
         # s,
         # t,
