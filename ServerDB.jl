@@ -17,7 +17,7 @@ conn = MySQL.connect(host, username, password, opts=opts)
 all_mesh = MySQL.query(conn, """select uid, str from pubmed_comorbidities.ALL_MESH""", DataFrame)
 all_concepts = MySQL.query(conn, """select distinct tui, sty from umls_meta.MRSTY""", DataFrame)
 
-function to_json(stats::T) where T<:PubMedMiner.Stats
+function to_json(stats::T, search_term::String = "") where T<:PubMedMiner.Stats
 
     json_dict = Dict{String,Any}()
 
@@ -28,6 +28,8 @@ function to_json(stats::T) where T<:PubMedMiner.Stats
             json_dict[String(field)] = getfield(stats, field)
         end
     end
+
+    json_dict["search_term"] = search_term
 
     # return JSON.print(io, json_dict)
     return JSON.json(json_dict)
@@ -74,7 +76,7 @@ function get_body(mesh_uid::String, concept_tui::String)
         df = get_semantic_occurrences_df(conn, mesh_name, concepts...)
         stats = mesh_stats(df, 50)
 
-        ret = to_json(stats)
+        ret = to_json(stats, mesh_name)
 
         stmt = MySQL.Stmt(conn, "insert into pubmed_comorbidities.query_cache (mesh_uid,concepts,body) VALUES (?,?,?)")
 
