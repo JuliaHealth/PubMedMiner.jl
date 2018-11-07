@@ -56,7 +56,7 @@ function mesh_stats(mesh_df::DataFrame, topn::Int=50)
 
     # RETURN FOR PLOT MATRICES
     #Point Mutual Information
-    pmi_sp = BCBIStats.COOccur.pmi_mat(top_coo_sp)
+    pmi_sp = BCBIStats.COOccur.pmi_mat(top_coo_sp, pmid_count)
     #chi2
     # top_chi2= BCBIStats.COOccur.chi2_mat(top_occ, min_freq=0) NOT USED RIGHT NOW
     #correlation
