@@ -21,6 +21,8 @@ mutable struct Stats
 
 end
 
+Stats() = Stats(0, [], [], [], Array{Any,2}(undef, 0, 0), Array{Any,2}(undef, 0, 0), [], 0, DataFrame(lhs = [], rhs = [], supp = [], conf = [], lift = []))
+
 
 """
     get_plotting_inputs(mesh_df, topn)
@@ -86,31 +88,6 @@ function mesh_stats(mesh_df::DataFrame, topn::Int=50)
     # find ARules - not actually used in plots?
     mh_rules = apriori(fsets, supp = 0.001, conf = 0, maxlen = 9)
 
-    # # ARules to DF
-    # mh_lkup = Dict(zip(values(mesh_frequencies.dicts[2]), keys(mesh_frequencies.dicts[2])))
-    # rules_df= ARules.rules_to_dataframe(mh_rules, mh_lkup, join_str = " | ");
-    #
-    # # generate frequent item sets tree given supp
-    # supp_int = round(Int, 0.001 * size(mh_occ, 1))
-    # root = frequent_item_tree(mh_occ, supp_int, 9);
-    #
-    # # frequent item sets to df
-    # supp_lkup = gen_support_dict(root, size(mh_occ, 1))
-    # item_lkup = mesh_frequencies.dicts[2]
-    # item_lkup_t = Dict(zip(values(item_lkup), keys(item_lkup)))
-    # freq = ARules.suppdict_to_dataframe(supp_lkup, item_lkup_t)
-    #
-    # frequent = ARules.frequent()
-    #
-    # # get sankey data
-    # sources, targets, vals = PubMedMiner.fill_sankey_data(root)
-    #
-    # topn_sankey = min(topn, length(sources))
-    #
-    # freq_vals_perm = sortperm(vals, rev=true)
-    # s = sources[freq_vals_perm[1:topn_sankey]]
-    # t = targets[freq_vals_perm[1:topn_sankey]]
-    # v = vals[freq_vals_perm[1:topn_sankey]]
 
     return PubMedMiner.Stats(
         pmid_count,
