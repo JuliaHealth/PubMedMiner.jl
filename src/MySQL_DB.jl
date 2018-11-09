@@ -15,7 +15,7 @@ function get_semantic_occurrences_df(db::MySQL.Connection, mesh::String, umls_co
     query_string = """ SELECT mh.pmid, mrc.str as descriptor
                     FROM pubmed_comorbidities.MH_SMALL mh
 
-                    JOIN (select uid from medline.mesh_desc where name = '$mesh') md
+                    JOIN (select uid from pubmed_comorbidities.ALL_MESH where STR = '$mesh') md
                     ON md.uid <> mh.desc_uid
 
                     JOIN pubmed_comorbidities.ALL_MESH mrc
@@ -27,7 +27,7 @@ function get_semantic_occurrences_df(db::MySQL.Connection, mesh::String, umls_co
                     JOIN pubmed_comorbidities.MH_SMALL mh2
                     ON mh2.pmid = mh.pmid
 
-                    join (select uid from medline.mesh_desc where name = '$mesh') md2
+                    join (select uid from pubmed_comorbidities.ALL_MESH where STR = '$mesh') md2
                     on md2.uid = mh2.desc_uid
 
                     WHERE mrs.sty in ($concept_string); """;
