@@ -1,6 +1,6 @@
 [[ARules]]
 deps = ["DataFrames", "StatsBase"]
-git-tree-sha1 = "d2a3cf6329919f8c6b532b68332d473f747bb100"
+git-tree-sha1 = "625a3445488837bc56dcf79b335d87fd785f2a49"
 repo-rev = "master"
 repo-url = "https://github.com/bcbi/ARules.jl.git"
 uuid = "7cbe2057-1070-5a1a-9a20-8e476bfa53e1"
@@ -19,8 +19,8 @@ uuid = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
 version = "0.3.0"
 
 [[BCBIStats]]
-deps = ["Distributions", "JLD2", "StatsBase"]
-git-tree-sha1 = "f2a6509c6c93ef49afd820991e656ee8ab604268"
+deps = ["Distributions", "JLD2", "LinearAlgebra", "SparseArrays", "StatsBase", "Test"]
+git-tree-sha1 = "5d6db96519a63a14fad21b0fe52fd81c47ee192a"
 repo-rev = "master"
 repo-url = "https://github.com/bcbi/BCBIStats.jl.git"
 uuid = "90663416-1ff1-5773-9c80-87bbd7add2fc"
@@ -42,12 +42,10 @@ uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
 version = "0.5.2"
 
 [[BioMedQuery]]
-deps = ["BioServices", "CSV", "DataFrames", "DataStreams", "Dates", "Distributed", "FTPClient", "HTTP", "LightXML", "MySQL", "SQLite", "SparseArrays", "XMLDict"]
-git-tree-sha1 = "3e13e0b6ea632f0cc2909f7af67ecd97873b74d7"
-repo-rev = "master"
-repo-url = "https://github.com/bcbi/BioMedQuery.jl.git"
+deps = ["BioServices", "CSV", "DataFrames", "DataStreams", "Dates", "Distributed", "FTPClient", "HTTP", "LightXML", "MySQL", "SQLite", "SparseArrays", "Test", "XMLDict", "ZipFile"]
+git-tree-sha1 = "ef0ac2183e9df4c18de1559a4237589466eb3a8e"
 uuid = "e96904bf-1073-5077-9b57-b0ce0ff5555a"
-version = "0.5.0+"
+version = "0.6.0"
 
 [[BioServices]]
 deps = ["Dates", "Gumbo", "HTTP", "JSON", "Test", "XMLDict"]
@@ -81,9 +79,9 @@ version = "0.7.0"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "2d9e14d19bad3f9ad5cc5e4cffabc3cfa59de825"
+git-tree-sha1 = "ec61a16eed883ad0cfa002d7489b3ce6d039bb9a"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "1.3.0"
+version = "1.4.0"
 
 [[DataFrames]]
 deps = ["CategoricalArrays", "CodecZlib", "Compat", "DataStreams", "Dates", "InteractiveUtils", "IteratorInterfaceExtensions", "LinearAlgebra", "Missings", "Printf", "Random", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Test", "TranscodingStreams", "Unicode", "WeakRefStrings"]
@@ -277,9 +275,9 @@ version = "0.9.5"
 
 [[Parsers]]
 deps = ["Dates", "Mmap", "Test", "WeakRefStrings"]
-git-tree-sha1 = "510eba237a97dfb73f8a0c16ed23f68e407885c1"
+git-tree-sha1 = "03375f006e75773b58cbc293bd958aae4152ed1b"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "0.2.11"
+version = "0.2.13"
 
 [[Pkg]]
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
@@ -432,3 +430,9 @@ deps = ["Compat", "DataStructures", "EzXML", "IterTools"]
 git-tree-sha1 = "eef200c08af0eb5ea6fdcb49d2605ad70954302d"
 uuid = "228000da-037f-5747-90a9-8195ccbf91a5"
 version = "0.2.0"
+
+[[ZipFile]]
+deps = ["BinaryProvider", "Libdl", "Printf", "Test"]
+git-tree-sha1 = "4000c633efe994b2e10b31b6d91382c4b7412dac"
+uuid = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
+version = "0.8.0"
