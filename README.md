@@ -11,6 +11,8 @@
 
 <!-- [![Build Status](https://travis-ci.org/bcbi/PubMedMiner.jl.svg?branch=master)](https://travis-ci.org/bcbi/PubMedMiner.jl) -->
 
+*NOTE: This package is in a state of flux and currently just supports the [PubMed Miner Web App](https://bcbi.brown.edu/pubmedminer) - DO NOT USE*
+
 This package provides a set of tools and examples to study co-occurrences/comorbidities in PubMed/Medline articles based on MeSH descriptors and UMLS concepts
 
 ## Installation
