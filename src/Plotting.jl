@@ -1,78 +1,140 @@
-using PlotlyJS
-using PlotlyJSFactory
+using VegaLite
+using DataFrames
+using LinearAlgebra
 
-"""
-    bar_plot_topn(mesh_names, mesh_counts)
+# These are the same plots as in the web app, data is added after the fact, so stubbed values are used at first in the specs
+# syntax highlighting not so great...
 
-Plots topn mesh terms vs their counts.
-"""
-function plot_bar_topn(mesh_names::Array{String}, mesh_counts::Array{Integer})
-    #traces
-    freq_trace = PlotlyJS.bar(; x = mesh_names, y= mesh_counts, marker_color="orange")
+function barplot(stats::Stats)
+  spec = vl"""
+  {
+    "title": {
+      "text": "Top $(length(stats.mesh_names)) Co-Occuring Terms by Count"
+    },
+    "data": {
+      "values": []
+    },
+    "mark": "bar",
+    "encoding": {
+      "x": {
+        "field": "x",
+        "type": "nominal",
+        "sort": { "field": "y" }
+      },
+      "y": {
+        "field": "y",
+        "type": "quantitative"
+      },
+      "color": {
+        "value": "\u00233B5B8C"
+      },
+      "tooltip" : [
+        {
+          "field": "x",
+          "type": "nominal",
+          "title": "MeSH"
+        },
+        {
+          "field": "y",
+          "type": "quantitative",
+          "title": "Count"
+        }
+      ]
+    }
+  }
+  """
+  df = DataFrame(x=stats.mesh_names, y=stats.mesh_counts)
+  spec(df)
 
-    data = [freq_trace]
-
-    topn = length(mesh_names)
-
-    layout = Layout(;title="$(topn) Most Frequent MeSH",
-                     showlegend=false,
-                     margin= Dict(:t=> 70, :r=> 0, :l=> 50, :b=>200),
-                     xaxis_tickangle = 90,)
-    plot(data, layout)
+  return nothing
 end
 
+function stats_matrix(stats::Stats, measure::Symbol)
 
-"""
-    plot_stat_mat(stat_mat, mesh_names)
+  maxExtent = maximum(abs.(vals))
+  minExtent = -1*maxExtent
 
-Creates a heat map showing pair statistics of the MeSH terms. For use with:
-* Point Mutual Information (PubMedMiner.Stats.pmi_sp)
-* Correlation (PubMedMiner.Stats.corrcoef)
-"""
-function plot_stat_mat(stat_mat, mesh_names)
-    stat_trace = heatmap(x=mesh_names, y=mesh_names, z=full(stat_mat- spdiagm(diag(stat_mat))))
+  data = []
+  for i = 1:length(stats.mesh_names), j = 1:length(stats.mesh_names)
+    if i != j
+      push!(data, (x=i,y=j,val=stats.measure[i,j]))
+    end
+  end
 
-    data = [stat_trace]
-    layout = Layout(;
-                     showlegend=false,
-                     height = 900, width=900,
-                     margin= Dict(:t=> 300, :r=> 0, :l=> 200, :b=>0),
-                     xaxis_tickangle = 90, xaxis_autotick=false, yaxis_autotick=false,
-                     yaxis_autorange = "reversed",
-                     xaxis_side = "top",
-                     xaxis_ticks = "", yaxis_ticks = "")
-    plot(data, layout)
+  table = data |> columntable
+
+  spec = vl"""
+  {
+    "title": {
+      "text": $string(measure)
+    },
+    "width": 700,
+    "height": 700,
+    "data": {
+      "values": []
+    },
+    "transform": [
+      {
+        "filter": "datum.x != datum.y"
+      }
+    ],
+    "config": { "axis": { "domain": false }},
+    "mark": "rect",
+    "encoding": {
+      "x": {
+        "field": "x",
+        "type": "nominal",
+        "axis": {
+          "orient": "top",
+          "ticks": false,
+          "domain": false,
+          "labelPadding": 4,
+          "minExtent": 180
+        }
+       },
+      "y": {
+        "field": "y",
+        "type": "nominal",
+        "axis": {
+          "ticks": false,
+          "domain": false,
+          "labelPadding": 4,
+          "minExtent": 180
+        }
+      },
+      "color": {
+        "field": "val",
+        "type": "quantitative",
+        "legend": {
+            "title": null
+        },
+        "scale": {
+          "domain": [$minExtent, 0, $maxExtent],
+          "range": ["\u00234d4d4d", "\u0023bababa", "\u0023ffffff", "\u0023ffffff", "\u002367a9cf","\u00233B5B8C"]
+        }
+      },
+      "tooltip": [
+        {
+          "field": "x",
+          "type": "nominal",
+          "title": "MeSH 1"
+        },
+        {
+          "field": "y",
+          "type": "nominal",
+          "title": "MeSH 2"
+        },
+        {
+          "field": "val",
+          "type": "quantitative",
+          "title": "Value"
+        }
+      ]
+    }
+  """
+  spec(table)
 end
 
-"""
-    plot_chord_coo(top_coo_sp, mesh_names)
+function chord_diagram(stats::Stats)
 
-Creates a chord diagram showing relationships between the topn mesh terms.
-"""
-function plot_chord_coo(top_coo_sp, mesh_names)
-    p = create_chord_plot(top_coo_sp, labels = mesh_names)
-
-    # Adding title not working right now...
-
-    # topn = length(mesh_names)
-    #
-    # relayout!(p, title="Co-occurrances between top $topn MeSH terms")
-    #
-    # plot(p)
-end
-
-"""
-    plot_sankey_arules(source, target, value, all_mesh_names)
-
-Creates a sankey plot showing the frequent item sets.
-"""
-function plot_sankey_arules(source, target, value, all_mesh_names)
-    pad = 1e-7
-    trace=sankey(orientation="h",
-         node = attr(domain=attr(x=[0,1], y=[0,1]), pad=pad, thickness=pad, line=attr(color="black", width=0.5), label=all_mesh_names),
-         link = attr(source=source, target=target, value = value))
-
-    layout = Layout(width=900, height=1100)
-
-    plot([trace], layout)
 end
