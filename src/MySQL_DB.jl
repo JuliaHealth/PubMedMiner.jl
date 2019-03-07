@@ -12,7 +12,7 @@ function get_semantic_occurrences_df(db::MySQL.Connection, mesh::String, umls_co
     concept_string = "'" * join(umls_concepts,"','") * "'"
 
     # select pmids from medline which use the mesh descriptor
-    query_string = """ SELECT mh.pmid, mrc.str as descriptor
+    query_string = """ SELECT mh.pmid as id, mrc.str as code
                     FROM pubmed_comorbidities.MH_SMALL mh
 
                     JOIN (select uid from pubmed_comorbidities.ALL_MESH where STR = '$mesh') md

@@ -1,16 +1,16 @@
 using VegaLite
 using DataFrames
-using LinearAlgebra
+using JSON
 using Combinatorics
 
 # These are the same plots as in the web app, data is added after the fact, so stubbed values are used at first in the specs
 # syntax highlighting not so great...
 
 function barplot(stats::Stats)
-  spec = vl"""
+  spec = """
   {
     "title": {
-      "text": "Top $(length(stats.mesh_names)) Co-Occuring Terms by Count"
+      "text": "Top $(length(stats.topn_codes)) Co-Occuring Terms by Count"
     },
     "data": {
       "values": []
@@ -33,7 +33,7 @@ function barplot(stats::Stats)
         {
           "field": "x",
           "type": "nominal",
-          "title": "MeSH"
+          "title": "Code"
         },
         {
           "field": "y",
@@ -44,30 +44,38 @@ function barplot(stats::Stats)
     }
   }
   """
-  df = DataFrame(x=stats.mesh_names, y=stats.mesh_counts)
-  spec(df)
 
-  return nothing
+  dict = JSON.parse(spec)
+
+  data = DataFrame(x=stats.topn_codes, y=stats.topn_counts)
+
+  # return dict
+
+  plot = VegaLite.VLSpec{:plot}(dict)(data)
+
+  # plot(data)
+
+  return plot
 end
 
 function stats_matrix(stats::Stats, measure::Symbol)
 
+  vals = getfield(stats, measure)
+
   maxExtent = maximum(abs.(vals))
-  minExtent = -1*maxExtent
+  d = [-1*maxExtent, 0, maxExtent]
 
   data = []
-  for i = 1:length(stats.mesh_names), j = 1:length(stats.mesh_names)
-    if i != j
-      push!(data, (x=i,y=j,val=stats.measure[i,j]))
-    end
+  for i = 1:length(stats.topn_codes), j = 1:length(stats.topn_codes)
+    push!(data, (x=stats.topn_codes[i],y=stats.topn_codes[j],val=vals[i,j]))
   end
 
-  table = data |> columntable
+  table = data |> DataFrame
 
-  spec = vl"""
+  spec = """
   {
     "title": {
-      "text": $string(measure)
+      "text": "$(string(measure))"
     },
     "width": 700,
     "height": 700,
@@ -110,7 +118,7 @@ function stats_matrix(stats::Stats, measure::Symbol)
             "title": null
         },
         "scale": {
-          "domain": [$minExtent, 0, $maxExtent],
+          "domain": $d,
           "range": ["\u00234d4d4d", "\u0023bababa", "\u0023ffffff", "\u0023ffffff", "\u002367a9cf","\u00233B5B8C"]
         }
       },
@@ -118,12 +126,12 @@ function stats_matrix(stats::Stats, measure::Symbol)
         {
           "field": "x",
           "type": "nominal",
-          "title": "MeSH 1"
+          "title": "Code 1"
         },
         {
           "field": "y",
           "type": "nominal",
-          "title": "MeSH 2"
+          "title": "Code 2"
         },
         {
           "field": "val",
@@ -132,16 +140,17 @@ function stats_matrix(stats::Stats, measure::Symbol)
         }
       ]
     }
+  }
   """
-  spec(table)
+  dict = JSON.parse(spec)
+
+  return VegaLite.VLSpec{:plot}(dict)(table)
 end
 
-
 function chord_diagram(stats::Stats)
-
-  chord_rules = []
+  chordRules = []
   ruleID = 0
-  for row in eachrow(stats.mh_rules_df)
+  for row in eachrow(stats.rules_df)
     lhs = row[:lhs][2:end-1]
     lhsArr = split(lhs, " | ")
 
@@ -150,32 +159,36 @@ function chord_diagram(stats::Stats)
 
     perms = permutations(lhsArr) |> collect
 
-
     for perm in perms
       newLhs = join(perm, " | ")
-      fset = rhs * " | " * newLhs
+      fset = newLhs * " | " * rhs
       ruleID += 1
-      push!(chordRules, (id=ruleID, lhs=newLhs, rhs=rhs, sname=shortName, fset=fset, fsetSize=length(perm), conf=row[:conf], lift=row[:lift], supp=row[:supp]))
+      push!(chordRules, (id=ruleID, lhs=newLhs, rhs=rhs, sname=shortName, fset=fset, fsetSize=length(perm)+1, conf=round(row[:conf], digits=4), lift=round(row[:lift], digits=4), supp=round(row[:supp], digits=4)))
     end
   end
+
+  println("size rules: ", size(stats.rules_df))
+  println("size perms: ", length(chordRules))
 
   sort!(chordRules, by= x -> x.supp, rev=true)
 
   chordIDs = []
 
-  for i in 1:length(stats.topn_mesh_labels) # topn_codes
-    shortName = length(stats.topn_mesh_labels[i]) > 25 ? stats.topn_mesh_labels[i][1:25] * "..." : stats.topn_mesh_labels[i]
+  for i in 1:length(stats.topn_codes) # topn_codes
+    code = string(stats.topn_codes[i])
+    shortName = length(code) > 25 ? code[1:25] * "..." : code
 
-    push!(chordIDs, (id=i, name=stats.topn_mesh_labels[i], sname=shortName, supp=(stats.topn_mesh_counts[i] / stat.mh_rules_pmid_count)))
+    push!(chordIDs, (id=i-1, name=code, sname=shortName, supp=round(stats.topn_counts[i] / stats.rules_unit_count, digits=4)))
 
     ruleID += 1
-    push!(chordRules, (id=ruleID, lhs=missing, rhs=stats.topn_mesh_labels[i], sname=shortName, fset=stats.topn_mesh_labels[i], fsetSize=1, conf=0, lift=0, supp=(stats.topn_mesh_counts[i] / stat.mh_rules_pmid_count)))
+    push!(chordRules, (id=ruleID, lhs=missing, rhs=code, sname=shortName, fset=code, fsetSize=1, conf=0, lift=0, supp=round(stats.topn_counts[i] / stats.rules_unit_count, digits=4)))
   end
 
   chordRels=[]
-  for i = 1:length(stats.topn_mesh_labels), j = 1:length(stats.topn_mesh_labels)
-    if i < j && stats.top_coo_sp[i][j] > 0
-      push!(chordRels, (source=i, target=j, size=stats.top_coo_sp[i][j]))
+  for i = 1:length(stats.topn_codes), j = 1:length(stats.topn_codes)
+    if i < j && stats.top_coo_sp[i,j] > 0
+      push!(chordRels, (source=i-1, target=j-1, size=stats.top_coo_sp[i,j]))
+    end
   end
 
   ruleStr = json(chordRules)
@@ -183,12 +196,12 @@ function chord_diagram(stats::Stats)
   relStr = json(chordRels)
 
   dataSize = length(chordIDs)
-  maxEdgeSize = maximum(x->x.size, chordIDs)
+  maxEdgeSize = maximum(x->x.size, chordRels)
   maxFreqItems = maximum(x->x.fsetSize, chordRules)
 
   spec = """
   {
-    "\$schema": "https://vega.github.io/schema/vega/v4.json",
+    "\$schema": "https://vega.github.io/schema/vega/v4.4.0.json",
     "autosize": "pad",
     "padding": 5,
     "height": 700,
@@ -200,10 +213,10 @@ function chord_diagram(stats::Stats)
       { "name": "radius", "update": "chordWidth / 2 - 175" },
       { "name": "dataSize", "update": $dataSize },
       { "name": "maxEdgeSize", "update": $maxEdgeSize },
-      { "name": "maxFreqItems", "value": $maxFreqItems - 1 },
+      { "name": "maxFreqItems", "value": $(maxFreqItems-1) },
       { "name": "textOffset", "value": 5 },
       { "name": "textSize", "value": 11 },
-      { "name": "treeWidth", "value": ($maxFreqItems-1)*175 + 320},
+      { "name": "treeWidth", "value": $((maxFreqItems-1)*175 + 320)},
       {
         "name": "clicked",
         "value": {},
@@ -222,11 +235,11 @@ function chord_diagram(stats::Stats)
       },
       {
         "name": "freqItems",
-        "value": { "fset": "", "supp": 0, "url": "" },
-        "update": "active ? {'fset': active.name, 'supp': active.supp, 'url': active.url } : (clickedRule && {'fset': clickedRule.fset, 'supp': clickedRule.supp, 'url': clickedRule.url})",
+        "value": { "fset": "", "supp": 0 },
+        "update": "active ? {'fset': active.name, 'supp': active.supp} : (clickedRule && {'fset': clickedRule.fset, 'supp': clickedRule.supp})",
         "on": [
-          { "events": "@ruleNodes:click", "update": "{'fset': datum.rule.fset, 'supp': datum.rule.supp, 'url': datum.rule.url}" },
-          { "events": "@ruleLabels:click", "update": "{'fset': datum.rule.fset, 'supp': datum.rule.supp, 'url': datum.rule.url}" }
+          { "events": "@ruleNodes:click", "update": "{'fset': datum.rule.fset, 'supp': datum.rule.supp}" },
+          { "events": "@ruleLabels:click", "update": "{'fset': datum.rule.fset, 'supp': datum.rule.supp}" }
         ]
       },
       {
@@ -254,11 +267,11 @@ function chord_diagram(stats::Stats)
     "data": [
       {
         "name": "edges",
-        "values" : $relStr
+        "values" : $relStr,
         "transform": [
           {
             "type": "formula", "as": "strokeSize",
-            "expr": "max(min(datum.size / maxEdgeSize * 10, 7),.3)"
+            "expr": "max(min(datum.size / $maxEdgeSize * 10, 7), 0.3)"
           }
         ]
       },
@@ -278,7 +291,7 @@ function chord_diagram(stats::Stats)
       },
       {
         "name": "nodes",
-        "values": $idStr
+        "values": $idStr,
         "transform": [
           { "type": "window", "ops": ["rank"], "as": ["order"] },
           {
@@ -297,7 +310,7 @@ function chord_diagram(stats::Stats)
           },
           {
             "type": "formula", "as": "angle",
-            "expr": "( 360 * datum.id / dataSize + 270) % 360"
+            "expr": "( 360 * datum.id / $dataSize + 270) % 360"
           },
           {
             "type": "formula",
@@ -351,7 +364,7 @@ function chord_diagram(stats::Stats)
         "transform": [
           {
             "type": "filter",
-            "expr": "(datum.lhs === null && datum.rhs === active.name) || datum.lhs === active.name ||  (freqItems.fset && datum.lhs === freqItems.fset) || (freqItems.fset && (datum.lhs + ' |') === slice(freqItems.fset, 0, length(datum.lhs + ' |')))"
+            "expr": "(datum.lhs === null && datum.rhs === active.name) || datum.lhs === active.name ||  (freqItems.fset && datum.lhs === freqItems.fset) || (freqItems.fset && (datum.lhs + ' |') === substring(freqItems.fset, 0, length(datum.lhs + ' |')))"
           },
           {
             "type": "formula",
@@ -390,7 +403,7 @@ function chord_diagram(stats::Stats)
           {
             "type": "formula",
             "as": "x",
-            "expr": "(datum.depth / maxFreqItems) * (treeWidth - 320)"
+            "expr": "(datum.depth / $maxFreqItems) * (treeWidth - 320)"
           },
           {
             "type": "lookup",
@@ -424,14 +437,11 @@ function chord_diagram(stats::Stats)
     },
 
     "marks": [
-
-
-      // BEGIN CHORD DIAGRAM
       {
         "type": "group",
         "name": "chord",
         "title": {
-          "text": "Co-Occurences of MeSH Terms in Publications",
+          "text": "Co-Occurences of Codes in Population",
           "frame": "group",
           "fontSize": 22
         },
@@ -439,7 +449,7 @@ function chord_diagram(stats::Stats)
         "encode": {
           "update": {
             "width": { "signal": "chordWidth" },
-            "height": { "signal": "height" },
+            "height": { "signal": "height" }
           }
         },
 
@@ -542,7 +552,7 @@ function chord_diagram(stats::Stats)
       },
 
 
-      // BEGIN TREE CODE
+
       {
         "type": "group",
         "name": "activeTree",
@@ -555,7 +565,7 @@ function chord_diagram(stats::Stats)
         "encode": {
           "enter": {
             "width": { "signal": "treeWidth" },
-            "height": { "signal": "height" },
+            "height": { "signal": "height" }
           }
         },
 
@@ -590,7 +600,7 @@ function chord_diagram(stats::Stats)
                 "fillOpacity": {"signal": "datum.hasChildren ? 1 : 0"}
               },
               "hover": {
-                "fillOpacity": {"value": .5}
+                "fillOpacity": {"value": 0.5}
               }
             }
           },
@@ -615,7 +625,7 @@ function chord_diagram(stats::Stats)
             }
           },
 
-          // Top center frequent item set and support text
+
           {
             "type": "text",
             "encode": {
@@ -650,7 +660,6 @@ function chord_diagram(stats::Stats)
           },
 
 
-          // Legend for filled/un-filled tree nodes
           {
             "type": "symbol",
             "encode": {
@@ -702,7 +711,7 @@ function chord_diagram(stats::Stats)
           },
 
 
-          // Text to display if frequent item set tree is blank
+
           {
             "type": "text",
             "encode": {
@@ -725,7 +734,9 @@ function chord_diagram(stats::Stats)
     ]
   }
   """
+  dict = JSON.parse(spec)
 
-  return VegaLite.VGSpec(JSON.parse(spec))
+  # return dict
 
+  return VegaLite.VGSpec(dict)
 end

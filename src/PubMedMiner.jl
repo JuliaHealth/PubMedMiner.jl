@@ -10,12 +10,12 @@ module PubMedMiner
 using MySQL
 using DataFrames
 
-export get_semantic_occurrences_df,
-    mesh_stats
+export get_occurrences_df,
+    comorbidity_stats
 include("Stats.jl")
 include("MySQL_DB.jl")
 
 # include("API_DF.jl")
-# include("Plotting.jl")
+include("Plotting.jl")
 
 end #PubMedMiner
