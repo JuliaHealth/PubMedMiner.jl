@@ -49,11 +49,7 @@ function barplot(stats::Stats)
 
   data = DataFrame(x=stats.topn_codes, y=stats.topn_counts)
 
-  # return dict
-
   plot = VegaLite.VLSpec{:plot}(dict)(data)
-
-  # plot(data)
 
   return plot
 end
@@ -166,10 +162,7 @@ function chord_diagram(stats::Stats)
       push!(chordRules, (id=ruleID, lhs=newLhs, rhs=rhs, sname=shortName, fset=fset, fsetSize=length(perm)+1, conf=round(row[:conf], digits=4), lift=round(row[:lift], digits=4), supp=round(row[:supp], digits=4)))
     end
   end
-
-  println("size rules: ", size(stats.rules_df))
-  println("size perms: ", length(chordRules))
-
+  
   sort!(chordRules, by= x -> x.supp, rev=true)
 
   chordIDs = []
@@ -504,7 +497,7 @@ function chord_diagram(stats::Stats)
           },
           {
             "type": "text",
-            "name": "textNodes",
+            "name": "textNodes",``
             "from": {"data": "nodes"},
             "encode": {
               "enter": {
@@ -735,8 +728,6 @@ function chord_diagram(stats::Stats)
   }
   """
   dict = JSON.parse(spec)
-
-  # return dict
 
   return VegaLite.VGSpec(dict)
 end
