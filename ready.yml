@@ -1,0 +1,9 @@
+repo:       PubMedMiner.jl
+site_name:  PubMedMiner
+maintainers:
+    - name: Ian Bacher
+      github_user: ibacher
+repo_url:   https://github.com/bcbi/PubMedMiner.jl
+site_description: Tool to visually explore MeSH descriptors of MEDLINE/PubMed articles.
+site_url:   https://bcbi.brown.edu/PubMedMiner
+type:       web_app
