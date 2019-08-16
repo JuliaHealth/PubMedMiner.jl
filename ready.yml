@@ -5,5 +5,5 @@ maintainers:
       github_user: ibacher
 repo_url:   https://github.com/bcbi/PubMedMiner.jl
 site_description: Tool to visually explore MeSH descriptors of MEDLINE/PubMed articles.
-site_url:   https://bcbi.brown.edu/PubMedMiner
+site_url:   https://bcbi.brown.edu/pubmedminer
 type:       web_app
